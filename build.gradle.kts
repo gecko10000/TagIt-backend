@@ -28,12 +28,12 @@ repositories {
     mavenCentral()
 }
 
+val ktorVersion = "2.2.3"
+
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-}
-
-tasks.test {
-    useJUnitPlatform()
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
 }
 
 tasks.withType<KotlinCompile> {
