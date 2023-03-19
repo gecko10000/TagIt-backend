@@ -1,5 +1,13 @@
 package gecko10000.tagit.objects
 
-import gecko10000.tagit.HexColor
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-data class Tag(val name: String, val color: HexColor, val subtags: Set<Tag>, val files: Set<SavedFile>, val parent: Tag?)
+@Serializable
+data class Tag(val name: String, val parent: Tag? = null) {
+    @Transient
+    val subtags: Set<Tag> = mutableSetOf()
+
+    @Transient
+    val files: Set<SavedFile> = mutableSetOf()
+}
