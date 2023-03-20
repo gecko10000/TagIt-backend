@@ -1,5 +1,6 @@
 package gecko10000.tagit.serializers
 
+import gecko10000.tagit.fileDirectory
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -12,5 +13,5 @@ class FileSerializer : KSerializer<File> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("File", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: File) = encoder.encodeString(value.name)
-    override fun deserialize(decoder: Decoder) = File("files/" + decoder.decodeString())
+    override fun deserialize(decoder: Decoder) = File(fileDirectory + decoder.decodeString())
 }

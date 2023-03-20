@@ -9,7 +9,7 @@ import kotlin.system.exitProcess
 class FileManager {
 
     private fun loadFiles() {
-        val filesDir = File("files")
+        val filesDir = File(fileDirectory)
         if (filesDir.exists() && !filesDir.isDirectory) exitProcess(1) // files exists and is not a directory
         filesDir.mkdir()
         for (file in filesDir.listFiles()!!) {
@@ -38,7 +38,7 @@ class FileManager {
     }
 
     private fun loadTags() {
-        val tagsDir = File("tags")
+        val tagsDir = File(tagDirectory)
         if (tagsDir.exists() && !tagsDir.isDirectory) exitProcess(2) // tags exists and is not a directory
         tagsDir.mkdir()
         for (tagDir in tagsDir.listFiles()!!) {

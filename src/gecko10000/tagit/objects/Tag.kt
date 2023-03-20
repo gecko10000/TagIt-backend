@@ -1,5 +1,6 @@
 package gecko10000.tagit.objects
 
+import gecko10000.tagit.tagDirectory
 import gecko10000.tagit.tags
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -22,6 +23,6 @@ data class Tag(
     })*/
 
     fun fullName() = if (parent == null) name else tags[parent].toString() + "/" + name
-    fun getDirectory() = File("tags/${fullName()}")
+    fun getDirectory() = File(tagDirectory + fullName())
 
 }

@@ -1,5 +1,6 @@
 package gecko10000.tagit.routing
 
+import gecko10000.tagit.fileDirectory
 import gecko10000.tagit.fileManager
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
@@ -35,7 +36,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.post() {
     val existing = savedFiles[name]
     existing?.run { return@post call.respond(HttpStatusCode.Forbidden) }
     val stream = call.receiveStream()
-    val file = File("files/$name")
+    val file = File("$fileDirectory$name")
     savedFiles[name] = SavedFile(file)
     withContext(Dispatchers.IO) {
         try {
@@ -53,7 +54,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.patchAdd() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
     val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
-    sentTags ?: run {
+    if (sentTags.isNullOrEmpty()) {
         call.respond(HttpStatusCode.BadRequest)
         return
     }
@@ -66,7 +67,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.patchRemove() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
     val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
-    sentTags ?: run {
+    if (sentTags.isNullOrEmpty()) {
         call.respond(HttpStatusCode.BadRequest)
         return
     }
