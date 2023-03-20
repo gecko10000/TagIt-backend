@@ -11,6 +11,6 @@ import java.io.File
 class FileSerializer : KSerializer<File> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("File", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: File) = encoder.encodeString(value.path)
-    override fun deserialize(decoder: Decoder) = File(decoder.decodeString())
+    override fun serialize(encoder: Encoder, value: File) = encoder.encodeString(value.name)
+    override fun deserialize(decoder: Decoder) = File("files/" + decoder.decodeString())
 }

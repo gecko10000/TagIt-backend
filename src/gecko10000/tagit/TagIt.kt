@@ -2,6 +2,7 @@ package gecko10000.tagit
 
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
+import gecko10000.tagit.routing.fileRouting
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -19,33 +20,10 @@ val savedFiles = ConcurrentHashMap<String, SavedFile>()
 val tags = ConcurrentHashMap<String, Tag>()
 
 fun main(args: Array<String>) {
+    FileManager()
     embeddedServer(Netty, port = 10000) {
         routing {
-            route("/file") {
-                get("{name}") {
-                    val savedFile = savedFiles[call.parameters["name"]]
-                    savedFile ?: return@get call.respond(HttpStatusCode.NotFound)
-                    call.respondFile(savedFile.file)
-                }
-                post("{name}") {
-                    val name = call.parameters["name"]!!
-                    val existing = savedFiles[name]
-                    existing?.run { return@post call.respond(HttpStatusCode.Forbidden) }
-                    val stream = call.receiveStream()
-                    val file = File(name)
-                    savedFiles[name] = SavedFile(file)
-                    withContext(Dispatchers.IO) {
-                        try {
-                            stream.transferTo(file.outputStream())
-                        } catch (ex: IOException) {
-                            call.respond(HttpStatusCode.InternalServerError)
-                            savedFiles.remove(name)
-                            return@withContext
-                        }
-                        call.respond(HttpStatusCode.OK)
-                    }
-                }
-            }
+            fileRouting()
         }
     }.start(wait = true)
 }
