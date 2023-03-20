@@ -29,9 +29,9 @@ class FileManager {
             return
         }
         // file is a directory, create tag and call recursively
-        val tag = Tag(file.name, parent?.name)
+        val tag = Tag(file.name, parent)
         tags[tag.fullName()] = tag
-        parent?.run { tags[parent.fullName()] = parent.copy(subTags = subTags.plus(tag.name)) }
+        parent?.subTags?.add(tag)
         for (f in file.listFiles()!!) {
             loadTagsRecursively(f, tag)
         }
@@ -51,25 +51,25 @@ class FileManager {
         try {
             Files.createLink(tagDir.resolve(file.name).toPath(), file.toPath())
         } catch (ex: Throwable) {
-            println(ex)
+            println("createLink throwable: $ex")
         }
     }
 
     fun addTags(savedFile: SavedFile, vararg toAdd: Tag, link: Boolean = true) {
-        val name = savedFile.file.name
-        savedFiles[name] = savedFile.copy(tags = savedFile.tags.plus(toAdd.map { it.fullName() }))
+        savedFile.tags.addAll(toAdd)
         for (tag in toAdd) {
-            tags[tag.fullName()] = tag.copy(files = tag.files.plus(name))
-            val tagDir = tag.getDirectory()
-            if (link) createLink(tagDir, savedFile.file)
+            tag.files.add(savedFile)
+            if (link) {
+                val tagDir = tag.getDirectory()
+                createLink(tagDir, savedFile.file)
+            }
         }
     }
 
     fun removeTags(savedFile: SavedFile, vararg toRemove: Tag) {
-        val name = savedFile.file.name
-        savedFiles[name] = savedFile.copy(tags = savedFile.tags.minus(toRemove.map { it.fullName() }.toSet()))
+        savedFile.tags.removeAll(toRemove.toSet())
         for (tag in toRemove) {
-            tags[tag.fullName()] = tag.copy(files = tag.files.minus(name))
+            tag.files.remove(savedFile)
             tag.getDirectory().resolve(savedFile.file.name).delete()
         }
     }

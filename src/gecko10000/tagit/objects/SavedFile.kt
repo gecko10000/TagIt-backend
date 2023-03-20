@@ -1,6 +1,8 @@
 package gecko10000.tagit.objects
 
 import gecko10000.tagit.serializers.FileSerializer
+import gecko10000.tagit.serializers.TagStringSerializer
+import io.ktor.util.collections.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import java.io.File
@@ -9,11 +11,8 @@ import java.io.File
 data class SavedFile(
     @Serializable(with = FileSerializer::class)
     val file: File,
-    @Transient
-    val tags: Set<String> = setOf()
+    val tags: MutableSet<@Serializable(with = TagStringSerializer::class) Tag> = ConcurrentSet()
     ) {
-
-
     /*fun addTags(vararg newTags: Tag) = SavedFile(file, buildSet(tags.size + newTags.size) {
         addAll(tags)
         addAll(newTags.map{ it.name })

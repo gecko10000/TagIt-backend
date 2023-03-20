@@ -1,16 +1,21 @@
 package gecko10000.tagit.objects
 
+import gecko10000.tagit.serializers.NullableTagStringSerializer
+import gecko10000.tagit.serializers.SavedFileStringSerializer
+import gecko10000.tagit.serializers.TagStringSerializer
 import gecko10000.tagit.tagDirectory
-import gecko10000.tagit.tags
+import io.ktor.util.collections.*
 import kotlinx.serialization.Serializable
 import java.io.File
 
 @Serializable
 data class Tag(
     val name: String,
-    val parent: String? = null,
-    val subTags: Set<String> = setOf(),
-    val files: Set<String> = setOf()) {
+    @Serializable(with = NullableTagStringSerializer::class)
+    val parent: Tag? = null,
+    val subTags: MutableSet<@Serializable(with = TagStringSerializer::class) Tag> = ConcurrentSet(),
+    val files: MutableSet<@Serializable(with = SavedFileStringSerializer::class) SavedFile> = ConcurrentSet()
+) {
 
     /*fun addSubTags(vararg tags: Tag) = Tag(name, parent, buildSet(subTags.size + tags.size) {
         addAll(subTags)
@@ -22,7 +27,7 @@ data class Tag(
         addAll(newFiles.map { it.file.name })
     })*/
 
-    fun fullName(): String = if (tags[parent] == null) name else tags[parent]!!.fullName() + "/" + name
+    fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
     fun getDirectory() = File(tagDirectory + fullName())
 
 }
