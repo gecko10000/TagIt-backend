@@ -22,7 +22,7 @@ data class Tag(
         addAll(newFiles.map { it.file.name })
     })*/
 
-    fun fullName() = if (parent == null) name else tags[parent].toString() + "/" + name
+    fun fullName(): String = if (tags[parent] == null) name else tags[parent]!!.fullName() + "/" + name
     fun getDirectory() = File(tagDirectory + fullName())
 
 }
