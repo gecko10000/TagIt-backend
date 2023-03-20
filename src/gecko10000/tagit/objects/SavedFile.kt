@@ -13,8 +13,9 @@ data class SavedFile(
     val tags: Set<String> = setOf()
     ) {
 
-    fun addTags(vararg newTags: Tag) = SavedFile(file, buildSet(tags.size + newTags.size) {
+
+    /*fun addTags(vararg newTags: Tag) = SavedFile(file, buildSet(tags.size + newTags.size) {
         addAll(tags)
         addAll(newTags.map{ it.name })
-    })
+    })*/
 }

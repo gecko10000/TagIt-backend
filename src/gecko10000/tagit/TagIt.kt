@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 val savedFiles = ConcurrentHashMap<String, SavedFile>()
 val tags = ConcurrentHashMap<String, Tag>()
+val fileManager = FileManager()
 
 fun main(args: Array<String>) {
-    FileManager()
     embeddedServer(Netty, port = 10000) {
         routing {
             fileRouting()

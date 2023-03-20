@@ -1,8 +1,10 @@
 package gecko10000.tagit.routing
 
+import gecko10000.tagit.fileManager
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.savedFiles
+import gecko10000.tagit.tags
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -11,12 +13,20 @@ import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
 
+private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
+    val name = call.parameters["name"]
+    val existing = savedFiles[name]
+    existing ?: call.respond(HttpStatusCode.NotFound)
+    return existing
+}
+
 suspend fun PipelineContext<Unit, ApplicationCall>.get() {
-    val savedFile = savedFiles[call.parameters["name"]]
-    savedFile ?: return@get call.respond(HttpStatusCode.NotFound)
+    val savedFile = ensureFileExists(call) ?: return
     call.respondFile(savedFile.file)
 }
 
@@ -39,6 +49,32 @@ suspend fun PipelineContext<Unit, ApplicationCall>.post() {
     }
 }
 
+suspend fun PipelineContext<Unit, ApplicationCall>.patchAdd() {
+    val existing = ensureFileExists(call) ?: return
+    val params = call.receiveParameters()
+    val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
+    sentTags ?: run {
+        call.respond(HttpStatusCode.BadRequest)
+        return
+    }
+    // add tags to file
+    fileManager.addTags(existing, *sentTags.toTypedArray())
+    call.respond(HttpStatusCode.OK)
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.patchRemove() {
+    val existing = ensureFileExists(call) ?: return
+    val params = call.receiveParameters()
+    val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
+    sentTags ?: run {
+        call.respond(HttpStatusCode.BadRequest)
+        return
+    }
+    // remove tags from file
+    fileManager.removeTags(existing, *sentTags.toTypedArray())
+    call.respond(HttpStatusCode.OK)
+}
+
 fun Route.fileRouting() {
     route("/file") {
         get("{name}") {
@@ -46,6 +82,12 @@ fun Route.fileRouting() {
         }
         post("{name}") {
             post()
+        }
+        patch("{name}/add") {
+            patchAdd()
+        }
+        patch("{name}/remove") {
+            patchRemove()
         }
     }
 }
