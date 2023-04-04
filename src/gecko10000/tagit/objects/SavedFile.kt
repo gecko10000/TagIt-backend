@@ -4,7 +4,6 @@ import gecko10000.tagit.serializers.FileSerializer
 import gecko10000.tagit.serializers.TagStringSerializer
 import io.ktor.util.collections.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import java.io.File
 
 @Serializable

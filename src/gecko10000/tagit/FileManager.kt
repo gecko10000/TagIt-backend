@@ -76,6 +76,23 @@ class FileManager {
         }
     }
 
+    fun createTag(name: String): Tag {
+        // return existing
+        tags[name]?.let { return it }
+        val slashIndex = name.indexOfLast { c -> c == '/' }
+        // create tags recursively
+        val parent = if (slashIndex == -1) null else createTag(name.substring(0, slashIndex))
+        val tag = Tag(name.substring(slashIndex + 1), parent)
+        parent?.subTags?.add(tag)
+        tags[name] = tag
+        tag.getDirectory().mkdirs()
+        return tag
+    }
+
+    fun deleteTag(tag: Tag) {
+        tag.getDirectory().deleteRecursively()
+    }
+
     init {
         loadFiles()
         loadTags()

@@ -22,27 +22,28 @@ import java.io.IOException
 private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     val name = call.parameters["name"]
     val existing = savedFiles[name]
-    existing ?: call.respond(HttpStatusCode.NotFound)
+    // TODO: check filesystem?
+    existing ?: call.respond(HttpStatusCode.NotFound, "File not found.")
     return existing
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.getFile() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.getFile() {
     val savedFile = ensureFileExists(call) ?: return
     call.respondFile(savedFile.file)
 }
 
 
 
-suspend fun PipelineContext<Unit, ApplicationCall>.getTags() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.getTags() {
     val savedFile = ensureFileExists(call) ?: return
     //println(Json.encodeToString(savedFile.tags))
     call.respondJson(savedFile.tags)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     val name = call.parameters["name"]!!
     val existing = savedFiles[name]
-    existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden) }
+    existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden, "File already exists.") }
     val stream = call.receiveStream()
     val file = File("$fileDirectory$name")
     savedFiles[name] = SavedFile(file)
@@ -50,7 +51,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
         try {
             stream.transferTo(file.outputStream())
         } catch (ex: IOException) {
-            call.respond(HttpStatusCode.InternalServerError)
+            call.respond(HttpStatusCode.InternalServerError, ex)
             savedFiles.remove(name)
             return@withContext
         }
@@ -58,12 +59,12 @@ suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
     val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
     if (sentTags.isNullOrEmpty()) {
-        call.respond(HttpStatusCode.BadRequest)
+        call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
         return
     }
     // add tags to file
@@ -71,12 +72,12 @@ suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
     call.respond(HttpStatusCode.OK)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
     val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
     if (sentTags.isNullOrEmpty()) {
-        call.respond(HttpStatusCode.BadRequest)
+        call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
         return
     }
     // remove tags from file
@@ -84,7 +85,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
     call.respond(HttpStatusCode.OK)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.deleteFile() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.deleteFile() {
     val existing = ensureFileExists(call) ?: return
     fileManager.removeTags(existing, *existing.tags.toTypedArray())
     existing.file.delete()

@@ -7,4 +7,5 @@ val serializers = SerializersModule {
     contextual(FileSerializer())
     contextual(SavedFileStringSerializer())
     contextual(TagStringSerializer())
+    contextual(TagNameSerializer())
 }

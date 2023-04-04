@@ -16,3 +16,10 @@ class TagStringSerializer : KSerializer<Tag> {
     override fun serialize(encoder: Encoder, value: Tag) = encoder.encodeString(value.fullName())
     override fun deserialize(decoder: Decoder) = tags[decoder.decodeString()] ?: throw SerializationException("Tag not found: ${decoder.decodeString()}")
 }
+
+class TagNameSerializer : KSerializer<Tag> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Tag", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Tag) = encoder.encodeString(value.name)
+    override fun deserialize(decoder: Decoder) = throw NotImplementedError()
+}
