@@ -1,5 +1,7 @@
 package gecko10000.tagit
 
+import gecko10000.tagit.misc.fileDirectory
+import gecko10000.tagit.misc.tagDirectory
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
 import java.io.File

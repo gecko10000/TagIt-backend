@@ -1,9 +1,9 @@
 package gecko10000.tagit.routing
 
-import gecko10000.tagit.fileDirectory
 import gecko10000.tagit.fileManager
+import gecko10000.tagit.misc.fileDirectory
+import gecko10000.tagit.misc.respondJson
 import gecko10000.tagit.objects.SavedFile
-import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
@@ -26,15 +26,23 @@ private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     return existing
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.get() {
+suspend fun PipelineContext<Unit, ApplicationCall>.getFile() {
     val savedFile = ensureFileExists(call) ?: return
     call.respondFile(savedFile.file)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.post() {
+
+
+suspend fun PipelineContext<Unit, ApplicationCall>.getTags() {
+    val savedFile = ensureFileExists(call) ?: return
+    //println(Json.encodeToString(savedFile.tags))
+    call.respondJson(savedFile.tags)
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     val name = call.parameters["name"]!!
     val existing = savedFiles[name]
-    existing?.run { return@post call.respond(HttpStatusCode.Forbidden) }
+    existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden) }
     val stream = call.receiveStream()
     val file = File("$fileDirectory$name")
     savedFiles[name] = SavedFile(file)
@@ -50,7 +58,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.post() {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.patchAdd() {
+suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
     val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
@@ -63,7 +71,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.patchAdd() {
     call.respond(HttpStatusCode.OK)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.patchRemove() {
+suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
     val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
@@ -76,19 +84,32 @@ suspend fun PipelineContext<Unit, ApplicationCall>.patchRemove() {
     call.respond(HttpStatusCode.OK)
 }
 
+suspend fun PipelineContext<Unit, ApplicationCall>.deleteFile() {
+    val existing = ensureFileExists(call) ?: return
+    fileManager.removeTags(existing, *existing.tags.toTypedArray())
+    existing.file.delete()
+    call.respond(HttpStatusCode.OK)
+}
+
 fun Route.fileRouting() {
     route("/file") {
         get("{name}") {
-            get()
+            this.getFile()
+        }
+        get("{name}/tags") {
+            this.getTags()
         }
         post("{name}") {
-            post()
+            this.postFile()
         }
         patch("{name}/add") {
-            patchAdd()
+            this.patchAddTags()
         }
         patch("{name}/remove") {
-            patchRemove()
+            this.patchRemoveTags()
+        }
+        delete("{name}") {
+            this.deleteFile()
         }
     }
 }

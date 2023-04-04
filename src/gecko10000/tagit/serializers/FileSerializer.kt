@@ -1,6 +1,6 @@
 package gecko10000.tagit.serializers
 
-import gecko10000.tagit.fileDirectory
+import gecko10000.tagit.misc.fileDirectory
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
