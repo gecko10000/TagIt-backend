@@ -100,11 +100,12 @@ class FileManager {
             removeTags(file, tag)
             addTags(file, newTag)
         }
+        var ok = true
         for (subTag in tag.subTags) {
-            renameTag(subTag, "$newName/${subTag.name}")
+            ok = ok and renameTag(subTag, "$newName/${subTag.name}")
         }
         deleteTag(tag)
-        return true
+        return ok
     }
 
     fun deleteTag(tag: Tag) {
