@@ -42,10 +42,10 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getTags() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     val name = call.parameters["name"]!!
+    if (name.contains('/')) return call.respond(HttpStatusCode.Forbidden, "Slashes not allowed in filename.")
     val existing = savedFiles[name]
     existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden, "File already exists.") }
     val stream = call.receiveStream()
-    // TODO: fix directory escaping
     val file = File("$fileDirectory$name")
     savedFiles[name] = SavedFile(file)
     withContext(Dispatchers.IO) {
