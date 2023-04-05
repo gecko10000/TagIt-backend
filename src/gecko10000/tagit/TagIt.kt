@@ -3,6 +3,7 @@ package gecko10000.tagit
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.routing.fileRouting
+import gecko10000.tagit.routing.retrievalRouting
 import gecko10000.tagit.routing.tagRouting
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -18,6 +19,7 @@ fun main() {
         routing {
             fileRouting()
             tagRouting()
+            retrievalRouting()
         }
     }.start(wait = true)
 }
