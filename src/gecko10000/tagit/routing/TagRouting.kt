@@ -29,7 +29,8 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getTag() {
 private suspend fun PipelineContext<Unit, ApplicationCall>.createTag() {
     val name = getTagName(call)!!
     tags[name]?.run { return call.respond(HttpStatusCode.BadRequest, "Tag already exists.") }
-    fileManager.createTag(name)
+    fileManager.createTag(name) ?: return call.respond(HttpStatusCode.InternalServerError, "Could not create tag.")
+    println(name)
     call.respond(HttpStatusCode.OK)
 }
 
@@ -37,11 +38,16 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.renameTag() {
     val tag = ensureTagExists(call) ?: return
     val params = call.receiveParameters()
     val newName = params["name"]?.trimEnd('/') ?: return call.respond(HttpStatusCode.BadRequest, "No new name sent.")
+    // make sure we're not moving to an empty string (root /tags dir)
+    if (newName.isEmpty()) {
+        return call.respond(HttpStatusCode.BadRequest, "Can't have an empty tag!")
+    }
     // can't move fruit/ to fruit/apple!
     if (newName.startsWith(tag.fullName())) {
         return call.respond(HttpStatusCode.BadRequest, "Can't move a tag to one of its subtags!")
     }
-    fileManager.renameTag(tag, newName)
+    if (!fileManager.renameTag(tag, newName))
+        return call.respond(HttpStatusCode.InternalServerError, "Invalid new name.")
     call.respond(HttpStatusCode.OK)
 }
 

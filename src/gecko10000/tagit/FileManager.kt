@@ -77,16 +77,16 @@ class FileManager {
         }
     }
 
-    fun createTag(name: String): Tag {
+    fun createTag(name: String): Tag? {
         // return existing
         tags[name]?.let { return it }
         val slashIndex = name.indexOfLast { c -> c == '/' }
         // create tags recursively
         val parent = if (slashIndex == -1) null else createTag(name.substring(0, slashIndex))
         val tag = Tag(name.substring(slashIndex + 1), parent)
+        if (!tag.getDirectory().mkdirs()) return null
         parent?.subTags?.add(tag)
         tags[name] = tag
-        tag.getDirectory().mkdirs()
         return tag
     }
 
@@ -94,8 +94,8 @@ class FileManager {
     // move files to tag
     // renameTag on subTags
     // delete tag from map
-    fun renameTag(tag: Tag, newName: String) {
-        val newTag = createTag(newName)
+    fun renameTag(tag: Tag, newName: String): Boolean {
+        val newTag = createTag(newName) ?: return false
         for (file in tag.files) {
             removeTags(file, tag)
             addTags(file, newTag)
@@ -104,6 +104,7 @@ class FileManager {
             renameTag(subTag, "$newName/${subTag.name}")
         }
         deleteTag(tag)
+        return true
     }
 
     fun deleteTag(tag: Tag) {
