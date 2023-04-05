@@ -45,6 +45,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     val existing = savedFiles[name]
     existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden, "File already exists.") }
     val stream = call.receiveStream()
+    // TODO: fix directory escaping
     val file = File("$fileDirectory$name")
     savedFiles[name] = SavedFile(file)
     withContext(Dispatchers.IO) {
@@ -62,7 +63,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
 private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
-    val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
+    val sentTags = params["tags"]?.let { Json.decodeFromString<Array<String>>(it) }?.mapNotNull { tags[it.trimEnd('/')] }
     if (sentTags.isNullOrEmpty()) {
         call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
         return
@@ -75,7 +76,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
 private suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
-    val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it] }
+    val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it.trimEnd('/')] }
     if (sentTags.isNullOrEmpty()) {
         call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
         return

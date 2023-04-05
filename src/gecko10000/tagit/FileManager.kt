@@ -22,6 +22,7 @@ class FileManager {
     private fun loadTagsRecursively(file: File, parent: Tag?) {
         if (!file.isDirectory) {
             val savedFile = savedFiles[file.name]
+            // TODO: check if the file is actually hardlinked to the same name? what would even happen in that situation?
             // file no longer exists in files/ so there's no need to keep the symlink around
             savedFile ?: run {
                 file.delete()
@@ -89,7 +90,25 @@ class FileManager {
         return tag
     }
 
+    // create new tag
+    // move files to tag
+    // renameTag on subTags
+    // delete tag from map
+    fun renameTag(tag: Tag, newName: String) {
+        val newTag = createTag(newName)
+        for (file in tag.files) {
+            removeTags(file, tag)
+            addTags(file, newTag)
+        }
+        for (subTag in tag.subTags) {
+            renameTag(subTag, "$newName/${subTag.name}")
+        }
+        deleteTag(tag)
+    }
+
     fun deleteTag(tag: Tag) {
+        tag.parent?.subTags?.remove(tag)
+        tags.remove(tag.fullName())
         tag.getDirectory().deleteRecursively()
     }
 
