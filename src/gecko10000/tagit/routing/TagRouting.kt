@@ -44,7 +44,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.renameTag() {
     }
     // can't move fruit/ to fruit/apple!
     if (newName.startsWith(tag.fullName())) {
-        return call.respond(HttpStatusCode.BadRequest, "Can't move a tag to one of its subtags!")
+        return call.respond(HttpStatusCode.BadRequest, "Can't move a tag to one of its children!")
     }
     if (!fileManager.renameTag(tag, newName))
         return call.respond(HttpStatusCode.InternalServerError, "Invalid new name.")

@@ -13,19 +13,9 @@ data class Tag(
     val name: String,
     @Serializable(with = TagStringSerializer::class)
     val parent: Tag? = null,
-    val subTags: MutableSet<@Serializable(with = TagNameSerializer::class) Tag> = ConcurrentSet(),
+    val children: MutableSet<@Serializable(with = TagNameSerializer::class) Tag> = ConcurrentSet(),
     val files: MutableSet<@Serializable(with = SavedFileStringSerializer::class) SavedFile> = ConcurrentSet()
 ) {
-
-    /*fun addSubTags(vararg tags: Tag) = Tag(name, parent, buildSet(subTags.size + tags.size) {
-        addAll(subTags)
-        addAll(tags.map { it.name })
-    }, files)
-
-    fun addFiles(vararg newFiles: SavedFile) = Tag(name, parent, subTags, buildSet(files.size + newFiles.size) {
-        addAll(files)
-        addAll(newFiles.map { it.file.name })
-    })*/
 
     fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
     fun getDirectory() = File(tagDirectory + fullName())

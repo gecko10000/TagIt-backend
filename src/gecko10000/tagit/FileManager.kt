@@ -34,7 +34,7 @@ class FileManager {
         // file is a directory, create tag and call recursively
         val tag = Tag(file.name, parent)
         tags[tag.fullName()] = tag
-        parent?.subTags?.add(tag)
+        parent?.children?.add(tag)
         for (f in file.listFiles()!!) {
             loadTagsRecursively(f, tag)
         }
@@ -85,14 +85,14 @@ class FileManager {
         val parent = if (slashIndex == -1) null else createTag(name.substring(0, slashIndex))
         val tag = Tag(name.substring(slashIndex + 1), parent)
         if (!tag.getDirectory().mkdirs()) return null
-        parent?.subTags?.add(tag)
+        parent?.children?.add(tag)
         tags[name] = tag
         return tag
     }
 
     // create new tag
     // move files to tag
-    // renameTag on subTags
+    // renameTag on children
     // delete tag from map
     fun renameTag(tag: Tag, newName: String): Boolean {
         val newTag = createTag(newName) ?: return false
@@ -101,15 +101,15 @@ class FileManager {
             addTags(file, newTag)
         }
         var ok = true
-        for (subTag in tag.subTags) {
-            ok = ok and renameTag(subTag, "$newName/${subTag.name}")
+        for (child in tag.children) {
+            ok = ok and renameTag(child, "$newName/${child.name}")
         }
         deleteTag(tag)
         return ok
     }
 
     fun deleteTag(tag: Tag) {
-        tag.parent?.subTags?.remove(tag)
+        tag.parent?.children?.remove(tag)
         tags.remove(tag.fullName())
         tag.getDirectory().deleteRecursively()
     }
