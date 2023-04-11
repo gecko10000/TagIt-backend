@@ -31,6 +31,15 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getTag() {
     call.respondJson(tag)
 }
 
+private suspend fun PipelineContext<Unit, ApplicationCall>.getChildren() {
+    val tag = ensureTagExists(call) ?: return
+    // need to copy to new list since the original has the Serializable annotation
+    val copy = mutableListOf<Tag>()
+    copy.addAll(tag.children)
+    call.respondJson(copy)
+
+}
+
 private suspend fun PipelineContext<Unit, ApplicationCall>.createTag() {
     val name = getTagName(call)!!
     tags[name]?.run { return call.respond(HttpStatusCode.BadRequest, "Tag already exists.") }
@@ -69,6 +78,9 @@ fun Route.tagRouting() {
         }
         get("{name}") {
             this.getTag()
+        }
+        get("{name}/children") {
+            this.getChildren()
         }
         post("{name}") {
             this.createTag()
