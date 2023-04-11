@@ -10,6 +10,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 
 private fun getTagName(call: ApplicationCall) = call.parameters["name"]?.trimEnd('/')
 
@@ -31,12 +35,15 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getTag() {
     call.respondJson(tag)
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.getChildren() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.listTag() {
     val tag = ensureTagExists(call) ?: return
     // need to copy to new list since the original has the Serializable annotation
-    val copy = mutableListOf<Tag>()
-    copy.addAll(tag.children)
-    call.respondJson(copy)
+    tag.children.map { Json.encodeToJsonElement(it) }
+    val response = mapOf<String, JsonElement>(
+        "children" to JsonArray(tag.children.map { Json.encodeToJsonElement(it) }),
+        "files" to JsonArray(tag.files.map{ Json.encodeToJsonElement(it) })
+    )
+    call.respondJson(response)
 
 }
 
@@ -79,8 +86,8 @@ fun Route.tagRouting() {
         get("{name}") {
             this.getTag()
         }
-        get("{name}/children") {
-            this.getChildren()
+        get("{name}/list") {
+            this.listTag()
         }
         post("{name}") {
             this.createTag()
