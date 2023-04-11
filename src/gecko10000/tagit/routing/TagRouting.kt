@@ -27,7 +27,7 @@ private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.getRoot() {
     val roots = tags.filter { it.value.parent == null }.values
-    call.respondJson(roots)
+    call.respondJson(mapOf("children" to roots))
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.getTag() {
