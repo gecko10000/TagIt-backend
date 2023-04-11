@@ -21,6 +21,11 @@ private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
     return existing
 }
 
+private suspend fun PipelineContext<Unit, ApplicationCall>.getRoot() {
+    val roots = tags.filter { it.value.parent == null }.values
+    call.respondJson(roots)
+}
+
 private suspend fun PipelineContext<Unit, ApplicationCall>.getTag() {
     val tag = ensureTagExists(call) ?: return
     call.respondJson(tag)
@@ -59,6 +64,9 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.deleteTag() {
 
 fun Route.tagRouting() {
     route("/tag") {
+        get() {
+            this.getRoot()
+        }
         get("{name}") {
             this.getTag()
         }
