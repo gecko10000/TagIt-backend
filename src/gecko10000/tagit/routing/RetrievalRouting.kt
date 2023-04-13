@@ -11,7 +11,7 @@ import io.ktor.server.routing.*
 fun Route.retrievalRouting() {
     route("tags") {
         get("all") {
-            call.respondJson(tags.values.toList())
+            call.respondJson(tags.values.sortedBy { it.name })
         }
         get("search") {
             call.respond(HttpStatusCode.NotImplemented)
@@ -19,7 +19,7 @@ fun Route.retrievalRouting() {
     }
     route("files") {
         get("all") {
-            call.respondJson(savedFiles.values.toList())
+            call.respondJson(savedFiles.values.sortedBy { it.file.name })
         }
         get("search") {
             call.respond(HttpStatusCode.NotImplemented)

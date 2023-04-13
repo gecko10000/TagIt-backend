@@ -4,17 +4,19 @@ import gecko10000.tagit.misc.tagDirectory
 import gecko10000.tagit.serializers.SavedFileStringSerializer
 import gecko10000.tagit.serializers.TagNameSerializer
 import gecko10000.tagit.serializers.TagStringSerializer
-import io.ktor.util.collections.*
 import kotlinx.serialization.Serializable
 import java.io.File
+import java.util.concurrent.ConcurrentSkipListSet
 
 @Serializable
 data class Tag(
     val name: String,
     @Serializable(with = TagStringSerializer::class)
     val parent: Tag? = null,
-    val children: MutableSet<@Serializable(with = TagNameSerializer::class) Tag> = ConcurrentSet(),
-    val files: MutableSet<@Serializable(with = SavedFileStringSerializer::class) SavedFile> = ConcurrentSet()
+
+    val children: MutableSet<@Serializable(with = TagNameSerializer::class) Tag> = ConcurrentSkipListSet(compareBy { it.name }),
+
+    val files: MutableSet<@Serializable(with = SavedFileStringSerializer::class) SavedFile> = ConcurrentSkipListSet(compareBy { it.file.name })
 ) {
 
     fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
