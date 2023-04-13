@@ -5,8 +5,11 @@ import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.routing.fileRouting
 import gecko10000.tagit.routing.retrievalRouting
 import gecko10000.tagit.routing.tagRouting
+import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.routing.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,6 +23,12 @@ fun main() {
             fileRouting()
             tagRouting()
             retrievalRouting()
+        }
+        install(CORS) {
+            anyHost()
+            allowHeaders { true }
+            allowMethod(HttpMethod.Patch)
+            allowMethod(HttpMethod.Delete)
         }
     }.start(wait = true)
 }
