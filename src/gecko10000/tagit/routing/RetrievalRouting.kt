@@ -6,7 +6,6 @@ import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
@@ -19,13 +18,13 @@ enum class Order(val comparator: Comparator<SavedFile>) {
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.allFiles() {
-    val params = call.receiveParameters()
+    val headers = call.request.headers
     val order = try {
-        params["order"]?.uppercase(Locale.getDefault())?.let { Order.valueOf(it) } ?: Order.DATE_MODIFIED
+        headers["order"]?.uppercase(Locale.getDefault())?.let { Order.valueOf(it) } ?: Order.DATE_MODIFIED
     } catch (ex: IllegalArgumentException) {
         return call.respond(HttpStatusCode.NotImplemented, "Ordering not found.")
     }
-    val reversed = params["reversed"] == "true" // false if not provided or something other than "true"
+    val reversed = headers["reversed"] == "true" // false if not provided or something other than "true"
     var sortedFiles = savedFiles.values.sortedWith(order.comparator)
     if (reversed) sortedFiles = sortedFiles.reversed()
     call.respondJson(sortedFiles)
