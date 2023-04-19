@@ -60,6 +60,19 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     }
 }
 
+private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
+    val existing = ensureFileExists(call) ?: return
+    val params = call.receiveParameters()
+    val newName = params["name"] ?: return call.respond(HttpStatusCode.BadRequest, "No new name sent.")
+    if (newName.contains('/')) return call.respond(HttpStatusCode.Forbidden, "Slashes not allowed in filename.")
+    val newFile = existing.file.parentFile.resolve(newName)
+    if (newFile.exists()) return call.respond(HttpStatusCode.Forbidden, "New filename already exists.")
+    existing.file.renameTo(newFile)
+    savedFiles[newName] = SavedFile(newFile, existing.tags)
+    savedFiles.remove(call.parameters["name"])
+    call.respond(HttpStatusCode.OK)
+}
+
 private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
@@ -103,6 +116,9 @@ fun Route.fileRouting() {
         }
         post("{name}") {
             this.postFile()
+        }
+        patch("{name}") {
+            this.patchRenameFile()
         }
         patch("{name}/add") {
             this.patchAddTags()
