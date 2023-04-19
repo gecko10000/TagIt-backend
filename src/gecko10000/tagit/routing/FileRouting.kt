@@ -68,8 +68,14 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
     val newFile = existing.file.parentFile.resolve(newName)
     if (newFile.exists()) return call.respond(HttpStatusCode.Forbidden, "New filename already exists.")
     existing.file.renameTo(newFile)
-    savedFiles[newName] = SavedFile(newFile, existing.tags)
+
+    fileManager.removeTags(existing, *existing.tags.toTypedArray())
     savedFiles.remove(call.parameters["name"])
+
+    val newSavedFile = SavedFile(newFile)
+    savedFiles[newName] = newSavedFile
+    fileManager.addTags(newSavedFile, *existing.tags.toTypedArray())
+
     call.respond(HttpStatusCode.OK)
 }
 
@@ -103,6 +109,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.deleteFile() {
     val existing = ensureFileExists(call) ?: return
     fileManager.removeTags(existing, *existing.tags.toTypedArray())
     existing.file.delete()
+    savedFiles.remove(call.parameters["name"])
     call.respond(HttpStatusCode.OK)
 }
 
