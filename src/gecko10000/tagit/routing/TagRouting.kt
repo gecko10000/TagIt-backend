@@ -64,6 +64,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.renameTag() {
     if (newName.isEmpty()) {
         return call.respond(HttpStatusCode.BadRequest, "Can't have an empty tag!")
     }
+    // TODO: allow this
     // can't move fruit/ to fruit/apple!
     if (newName.startsWith("${tag.fullName()}/")) {
         return call.respond(HttpStatusCode.BadRequest, "Can't move a tag to one of its children!")
