@@ -27,6 +27,8 @@ version = "0.1"
 
 repositories {
     mavenCentral()
+    maven("https://redempt.dev")
+
 }
 
 val ktorVersion = "2.2.4"
@@ -37,6 +39,8 @@ dependencies {
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
+
+    implementation("com.github.Redempt:RedLex:1.3.5")
 }
 
 tasks.withType<KotlinCompile> {

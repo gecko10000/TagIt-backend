@@ -1,0 +1,6 @@
+root ::= query
+query ::= "(" query ")" | query and query | query or query | word
+and ::= space? ((space i"and" space) | "&" | "&&") space?
+or ::= space? ((space i"or" space) | "|" | "||") space?
+word ::= [^ &|]+
+space ::= [ \t\r\n]+
