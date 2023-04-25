@@ -31,20 +31,14 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.allFiles() {
 }
 
 fun Route.retrievalRouting() {
-    route("tags") {
+    route("/tags") {
         get("all") {
             call.respondJson(tags.values.sortedBy { it.name })
         }
-        get("search") {
-            call.respond(HttpStatusCode.NotImplemented)
-        }
     }
-    route("files") {
+    route("/files") {
         get("all") {
             allFiles()
-        }
-        get("search") {
-            call.respond(HttpStatusCode.NotImplemented)
         }
     }
 }

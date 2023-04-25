@@ -14,9 +14,10 @@ data class SavedFile(
     val file: File,
 
     val tags: MutableSet<@Serializable(with = TagStringSerializer::class) Tag> = ConcurrentSkipListSet(compareBy { it.name })
-    ) {
+    ) : Nameable() {
     /*fun addTags(vararg newTags: Tag) = SavedFile(file, buildSet(tags.size + newTags.size) {
         addAll(tags)
         addAll(newTags.map{ it.name })
     })*/
+    override fun name(): String = file.name
 }

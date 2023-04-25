@@ -4,6 +4,7 @@ import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.routing.fileRouting
 import gecko10000.tagit.routing.retrievalRouting
+import gecko10000.tagit.routing.searchRouting
 import gecko10000.tagit.routing.tagRouting
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -23,6 +24,7 @@ fun main() {
             fileRouting()
             tagRouting()
             retrievalRouting()
+            searchRouting()
         }
         install(CORS) {
             anyHost()

@@ -38,8 +38,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getTag() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.listTag() {
     val tag = ensureTagExists(call) ?: return
-    // need to copy to new list since the original has the Serializable annotation
-    tag.children.map { Json.encodeToJsonElement(it) }
     val response = mapOf<String, JsonElement>(
         "children" to JsonArray(tag.children.map { Json.encodeToJsonElement(it) }),
         "files" to JsonArray(tag.files.map{ Json.encodeToJsonElement(it) })
@@ -82,7 +80,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.deleteTag() {
 
 fun Route.tagRouting() {
     route("/tag") {
-        get() {
+        get {
             this.getRoot()
         }
         get("{name}") {
