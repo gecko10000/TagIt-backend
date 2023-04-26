@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import redempt.redlex.bnf.BNFParser
+import redempt.redlex.debug.DebugLexer
 import redempt.redlex.parser.Parser
 import redempt.redlex.parser.ParserComponent
 import redempt.redlex.processing.CullStrategy
@@ -41,43 +42,58 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.search() {
     call.respondJson(response)
 }
 
+// simply returns true if the operator is an "and" and false otherwise.
+private fun isAnd(str: String): Boolean = str.equals("and", ignoreCase = true) || str == "&" || str == "&&"
+
+@Suppress("UNCHECKED_CAST") // if i don't see it, it's not there
 private val parser = Parser.create(
     run {
-        val lexer = BNFParser.createLexer(ClassLoader.getSystemClassLoader().getResourceAsStream("search.bnf"))
+        val lexer = BNFParser.createLexer(ClassLoader.getSystemClassLoader().getResourceAsStream("search.bnf")).debug()
         lexer.setUnnamedRule(CullStrategy.LIFT_CHILDREN)
-        lexer.setRuleByName(CullStrategy.DELETE_ALL, "space")
+        lexer.setRetainStringLiterals(false)
+        lexer.setRuleByName(CullStrategy.DELETE_ALL, "sep")
         lexer
     },
     ParserComponent.mapChildren("query") {
-        if (it.size != 3) it[0]
-        else if (it[1] is BinaryOperator) {
-            val q1 = it[0] as Predicate<Nameable>
-            val q2 = it[2] as Predicate<Nameable>
-            if (it[1] == BinaryOperator.AND) q1.and(q2) else q1.or(q2)
+        //if (it.size != 3) it[0]
+        var predicate = it[0] as Predicate<Nameable>
+        lateinit var operator: BinaryOperator
+        for (i in IntRange(1, it.size - 1)) {
+            // query
+            if (i % 2 == 0) {
+                println(operator)
+                predicate = operator.apply(predicate, it[i] as Predicate<Nameable>)
+            } else operator = it[i] as BinaryOperator
         }
-        else it[1]
+        predicate
     },
-    ParserComponent.mapToken("and") {
-        BinaryOperator.AND
+    ParserComponent.mapChildren("term") {
+        if (it.size == 1) it[0] else it[1]
     },
-    ParserComponent.mapToken("or") {
-        BinaryOperator.OR
+    ParserComponent.mapString("operator") {
+        println(it.trim())
+        if (isAnd(it.trim())) BinaryOperator.AND else BinaryOperator.OR
     },
     ParserComponent.mapToken("word") { token ->
-        Predicate<Nameable> { token.value == it.name() }
+        Predicate<Nameable> { it.name().contains(token.value) }
     }
 )
 
+
 private fun parseSearchInput(input: String): Predicate<Nameable> {
     try {
+        @Suppress("UNCHECKED_CAST")
         return parser.parse(input) as Predicate<Nameable>
     } catch (ex: Exception) {
         ex.printStackTrace()
+        println((parser.lexer as DebugLexer).debugHistory)
         throw ex
     }
 }
 
 enum class BinaryOperator {
     AND,
-    OR
+    OR,
+    ;
+    fun <T> apply(p1: Predicate<T>, p2: Predicate<T>): Predicate<T> = if (this == AND) p1.and(p2) else p1.or(p2)
 }
