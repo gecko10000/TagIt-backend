@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import redempt.redlex.bnf.BNFParser
-import redempt.redlex.debug.DebugLexer
+import redempt.redlex.exception.LexException
 import redempt.redlex.parser.Parser
 import redempt.redlex.parser.ParserComponent
 import redempt.redlex.processing.CullStrategy
@@ -32,7 +32,7 @@ fun Route.searchRouting() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.search() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
-    val parsedSearch = parseSearchInput(searchInput)
+    val parsedSearch = parseSearchInput(call, searchInput) ?: return
     val foundTags = tags.filterValues { parsedSearch.test(it) }
     val foundFiles = savedFiles.filterValues { parsedSearch.test(it) }
     val response = mapOf<String, JsonElement>(
@@ -79,16 +79,24 @@ private val parser = Parser.create(
     }
 )
 
-
-private fun parseSearchInput(input: String): Predicate<Nameable> {
+private val errorRegex = Regex("column ([0-9]+)")
+private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<Nameable>? {
     try {
         @Suppress("UNCHECKED_CAST")
         return parser.parse(input) as Predicate<Nameable>
-    } catch (ex: Exception) {
-        ex.printStackTrace()
-        println((parser.lexer as DebugLexer).debugHistory)
-        throw ex
+    } catch (ex: LexException) {
+        val message = ex.message ?: return run {
+            call.respond(HttpStatusCode.InternalServerError, "Parser error message was empty.")
+            null
+        }
+        val index = errorRegex.find(message)?.groups?.get(1)?.value ?: return run {
+            call.respond(HttpStatusCode.InternalServerError, "Error regex matcher failed.")
+            null
+        }
+        // string is 1-indexed so we need to subtract 1 from the index that errors
+        call.respond(HttpStatusCode.UnprocessableEntity, index.toIntOrNull()?.dec().toString())
     }
+    return null
 }
 
 enum class BinaryOperator {
