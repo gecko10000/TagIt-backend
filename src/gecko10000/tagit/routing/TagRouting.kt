@@ -50,7 +50,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.createTag() {
     val name = getTagName(call)!!
     tags[name]?.run { return call.respond(HttpStatusCode.BadRequest, "Tag already exists.") }
     fileManager.createTag(name) ?: return call.respond(HttpStatusCode.InternalServerError, "Could not create tag.")
-    println(name)
+    //println(name)
     call.respond(HttpStatusCode.OK)
 }
 

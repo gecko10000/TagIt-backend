@@ -1,7 +1,8 @@
 root ::= query
 operator ::= sep (i"and" | i"or") sep | sep? ("&"{1,2} | "|"{1,2}) sep?
 sep ::= [ \t\r\n]+
-# TODO: file:<word>
+file ::= "file:" sep? word
+tag ::= word
 word ::= [^ &|()]+
-term ::= word | "(" query ")"
+term ::= file | tag | "(" sep? query sep? ")"
 query ::= term (operator term)*

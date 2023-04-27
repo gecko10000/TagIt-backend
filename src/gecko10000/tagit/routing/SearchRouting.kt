@@ -1,9 +1,8 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.objects.Nameable
+import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.savedFiles
-import gecko10000.tagit.tags
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -33,10 +32,8 @@ fun Route.searchRouting() {
 private suspend fun PipelineContext<Unit, ApplicationCall>.search() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
     val parsedSearch = parseSearchInput(call, searchInput) ?: return
-    val foundTags = tags.filterValues { parsedSearch.test(it) }
     val foundFiles = savedFiles.filterValues { parsedSearch.test(it) }
     val response = mapOf<String, JsonElement>(
-        "tags" to JsonArray(foundTags.map { Json.encodeToJsonElement(it.value) }),
         "files" to JsonArray(foundFiles.map{ Json.encodeToJsonElement(it.value) })
     )
     call.respondJson(response)
@@ -56,34 +53,36 @@ private val parser = Parser.create(
     },
     ParserComponent.mapChildren("query") {
         //if (it.size != 3) it[0]
-        var predicate = it[0] as Predicate<Nameable>
+        var predicate = it[0] as Predicate<SavedFile>
         lateinit var operator: BinaryOperator
         for (i in IntRange(1, it.size - 1)) {
             // query
             if (i % 2 == 0) {
-                println(operator)
-                predicate = operator.apply(predicate, it[i] as Predicate<Nameable>)
+                predicate = operator.apply(predicate, it[i] as Predicate<SavedFile>)
             } else operator = it[i] as BinaryOperator
         }
         predicate
     },
-    ParserComponent.mapChildren("term") {
-        if (it.size == 1) it[0] else it[1]
-    },
+    ParserComponent.mapChildren("term") { it[0] },
     ParserComponent.mapString("operator") {
-        println(it.trim())
         if (isAnd(it.trim())) BinaryOperator.AND else BinaryOperator.OR
     },
-    ParserComponent.mapToken("word") { token ->
-        Predicate<Nameable> { it.name().contains(token.value) }
-    }
+    ParserComponent.mapString("file") { s ->
+        // we get file:[ ]*<filename> so we have to remove the leading text
+        val sub = s.substringAfter(':').trimStart()
+        Predicate<SavedFile>{ it.name().contains(sub) }
+    },
+    ParserComponent.mapString("tag") { s ->
+        Predicate<SavedFile>{ it.tags.any { t -> t.fullName().contains(s) }}
+    },
+    ParserComponent.mapString("word") { it },
 )
 
 private val errorRegex = Regex("column ([0-9]+)")
-private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<Nameable>? {
+private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<SavedFile>? {
     try {
         @Suppress("UNCHECKED_CAST")
-        return parser.parse(input) as Predicate<Nameable>
+        return parser.parse(input) as Predicate<SavedFile>
     } catch (ex: LexException) {
         val message = ex.message ?: return run {
             call.respond(HttpStatusCode.InternalServerError, "Parser error message was empty.")
@@ -95,6 +94,9 @@ private suspend fun parseSearchInput(call: ApplicationCall, input: String): Pred
         }
         // string is 1-indexed so we need to subtract 1 from the index that errors
         call.respond(HttpStatusCode.UnprocessableEntity, index.toIntOrNull()?.dec().toString())
+    } catch (ex: Exception) {
+        ex.printStackTrace()
+        throw ex
     }
     return null
 }
