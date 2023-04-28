@@ -45,7 +45,7 @@ private fun isAnd(str: String): Boolean = str.equals("and", ignoreCase = true) |
 @Suppress("UNCHECKED_CAST") // if i don't see it, it's not there
 private val parser = Parser.create(
     run {
-        val lexer = BNFParser.createLexer(ClassLoader.getSystemClassLoader().getResourceAsStream("search.bnf")).debug()
+        val lexer = BNFParser.createLexer(ClassLoader.getSystemClassLoader().getResourceAsStream("search.bnf"))
         lexer.setUnnamedRule(CullStrategy.LIFT_CHILDREN)
         lexer.setRetainStringLiterals(false)
         lexer.setRuleByName(CullStrategy.DELETE_ALL, "sep")
