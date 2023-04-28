@@ -4,5 +4,5 @@ sep ::= [ \t\r\n]+
 file ::= "file:" sep? word
 tag ::= word
 word ::= [^ &|()]+
-term ::= file | tag | "(" sep? query sep? ")"
-query ::= term (operator term)*
+term ::= file | tag | "(" query ")"
+query ::= sep? term (operator term)* sep?
