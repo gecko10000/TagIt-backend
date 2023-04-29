@@ -24,4 +24,6 @@ data class Tag(
 
     override fun name(): String = fullName()
 
+    override fun hashCode() = fullName().hashCode()
+
 }

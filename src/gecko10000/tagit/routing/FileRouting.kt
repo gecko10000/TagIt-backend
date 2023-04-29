@@ -68,14 +68,13 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
     val newFile = existing.file.parentFile.resolve(newName)
     if (newFile.exists()) return call.respond(HttpStatusCode.Forbidden, "New filename already exists.")
     existing.file.renameTo(newFile)
-
-    fileManager.removeTags(existing, *existing.tags.toTypedArray())
+    val tags = existing.tags.toTypedArray()
+    fileManager.removeTags(existing, *tags)
     savedFiles.remove(call.parameters["name"])
 
     val newSavedFile = SavedFile(newFile)
     savedFiles[newName] = newSavedFile
-    fileManager.addTags(newSavedFile, *existing.tags.toTypedArray())
-
+    fileManager.addTags(newSavedFile, *tags)
     call.respond(HttpStatusCode.OK)
 }
 
