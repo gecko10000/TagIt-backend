@@ -20,8 +20,8 @@ import java.util.function.Predicate
 
 fun Route.searchRouting() {
     route("/search") {
-        get {
-            search()
+        get("files") {
+            searchFiles()
         }
         get("tags") {
             searchTags()
@@ -29,7 +29,13 @@ fun Route.searchRouting() {
     }
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.search() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.searchTags() {
+    val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
+    val foundTags = tags.values.filter { it.fullName().contains(searchInput) }.toList()
+    call.respondJson(foundTags)
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.searchFiles() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
     val parsedSearch = parseSearchInput(call, searchInput) ?: return
     val foundFiles = savedFiles.values.filter { parsedSearch.test(it) }.toList()
