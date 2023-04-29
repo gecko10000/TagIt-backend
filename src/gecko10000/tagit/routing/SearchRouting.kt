@@ -75,6 +75,9 @@ private val parser = Parser.create(
     ParserComponent.mapString("tag") { s ->
         Predicate<SavedFile>{ it.tags.any { t -> t.fullName().contains(s) }}
     },
+    ParserComponent.mapChildren("not") {
+        Predicate.not(it[0] as Predicate<SavedFile>)
+    },
     ParserComponent.mapString("word") { it },
 )
 
