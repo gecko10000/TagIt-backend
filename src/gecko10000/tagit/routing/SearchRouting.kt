@@ -3,15 +3,12 @@ package gecko10000.tagit.routing
 import gecko10000.tagit.misc.respondJson
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.savedFiles
+import gecko10000.tagit.tags
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.encodeToJsonElement
 import redempt.redlex.bnf.BNFParser
 import redempt.redlex.exception.LexException
 import redempt.redlex.parser.Parser
@@ -26,17 +23,17 @@ fun Route.searchRouting() {
         get {
             search()
         }
+        get("tags") {
+            searchTags()
+        }
     }
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.search() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
     val parsedSearch = parseSearchInput(call, searchInput) ?: return
-    val foundFiles = savedFiles.filterValues { parsedSearch.test(it) }
-    val response = mapOf<String, JsonElement>(
-        "files" to JsonArray(foundFiles.map{ Json.encodeToJsonElement(it.value) })
-    )
-    call.respondJson(response)
+    val foundFiles = savedFiles.values.filter { parsedSearch.test(it) }.toList()
+    call.respondJson(foundFiles)
 }
 
 // simply returns true if the operator is an "and" and false otherwise.
