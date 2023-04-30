@@ -81,7 +81,8 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
 private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
-    val sentTags = params["tags"]?.let { Json.decodeFromString<Array<String>>(it) }?.mapNotNull { tags[it.trimEnd('/')] }
+    val sentTagNames = params["tags"]?.let { Json.decodeFromString<Array<String>>(it) }?.map { it.trimEnd('/') }
+    val sentTags = sentTagNames?.mapNotNull { tags[it] ?: fileManager.createTag(it) }
     if (sentTags.isNullOrEmpty()) {
         call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
         return
