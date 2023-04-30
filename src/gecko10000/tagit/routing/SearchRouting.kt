@@ -31,7 +31,7 @@ fun Route.searchRouting() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.searchTags() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
-    val foundTags = tags.values.filter { it.fullName().contains(searchInput) }.toList()
+    val foundTags = tags.values.filter { it.fullName().contains(searchInput) }.sortedBy { it.fullName().length }.toList()
     call.respondJson(foundTags)
 }
 
