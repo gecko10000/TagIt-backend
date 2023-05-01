@@ -47,6 +47,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden, "File already exists.") }
     val stream = call.receiveStream()
     val file = File("$fileDirectory$name")
+    file.createNewFile()
     savedFiles[name] = SavedFile(file)
     withContext(Dispatchers.IO) {
         try {
