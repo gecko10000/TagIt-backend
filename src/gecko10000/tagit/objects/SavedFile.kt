@@ -11,7 +11,4 @@ data class SavedFile(
     @Serializable(with = FileSerializer::class)
     val file: File,
     val tags: MutableSet<@Serializable(with = TagStringSerializer::class) Tag> = ConcurrentSkipListSet(compareBy { it.name })
-) : Nameable() {
-
-    override fun name(): String = file.name
-}
+)

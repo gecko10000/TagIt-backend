@@ -73,7 +73,7 @@ private val parser = Parser.create(
     ParserComponent.mapString("file") { s ->
         // we get file:[ ]*<filename> so we have to remove the leading text
         val sub = s.substringAfter(':').trimStart()
-        Predicate<SavedFile>{ it.name().contains(sub) }
+        Predicate<SavedFile>{ it.file.name.contains(sub) }
     },
     ParserComponent.mapString("tag") { s ->
         Predicate<SavedFile>{ it.tags.any { t -> t.fullName().contains(s) }}
