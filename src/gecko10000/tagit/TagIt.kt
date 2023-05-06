@@ -12,11 +12,13 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.routing.*
+import kcash.kcash.misc.Database
 import java.util.concurrent.ConcurrentHashMap
 
 val savedFiles = ConcurrentHashMap<String, SavedFile>()
 val tags = ConcurrentHashMap<String, Tag>()
 val fileManager = FileManager()
+val db = Database()
 
 fun main() {
     embeddedServer(Netty, port = 10000) {
