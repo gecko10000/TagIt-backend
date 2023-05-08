@@ -18,13 +18,13 @@ class Database {
         sql.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 username STRING NOT NULL,
-                pass_hash STRING NOT NULL,
+                pass_hash STRING NOT NULL
             );
         """.trimIndent())
         sql.execute("""
             CREATE TABLE IF NOT EXISTS user_tokens (
                 token STRING NOT NULL,
-                user_id INTEGER NOT NULL REFERENCES users(rowid),
+                user_id INTEGER NOT NULL REFERENCES users(rowid)
             );
         """.trimIndent())
     }

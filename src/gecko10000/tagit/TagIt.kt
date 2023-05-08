@@ -1,13 +1,12 @@
 package gecko10000.tagit
 
+import gecko10000.tagit.db.DBToken
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
-import gecko10000.tagit.routing.fileRouting
-import gecko10000.tagit.routing.retrievalRouting
-import gecko10000.tagit.routing.searchRouting
-import gecko10000.tagit.routing.tagRouting
+import gecko10000.tagit.routing.*
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.cors.routing.*
@@ -22,17 +21,27 @@ val db = Database()
 
 fun main() {
     embeddedServer(Netty, port = 10000) {
-        routing {
-            fileRouting()
-            tagRouting()
-            retrievalRouting()
-            searchRouting()
-        }
         install(CORS) {
             anyHost()
             allowHeaders { true }
             allowMethod(HttpMethod.Patch)
             allowMethod(HttpMethod.Delete)
+        }
+        install(Authentication) {
+            bearer("auth-bearer") {
+                authenticate { tokenCredential ->
+                    val token = DBToken.fromString(tokenCredential.token) ?: return@authenticate null
+                    println(token)
+                    UserIdPrincipal(token.user.name)
+                }
+            }
+        }
+        routing {
+            fileRouting()
+            tagRouting()
+            retrievalRouting()
+            searchRouting()
+            authRouting()
         }
     }.start(wait = true)
 }

@@ -40,6 +40,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth:$ktorVersion")
 
     implementation("com.github.Redempt:RedLex:1.3.5")
     implementation("org.xerial:sqlite-jdbc:3.41.2.1")
