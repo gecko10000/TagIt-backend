@@ -4,25 +4,33 @@ data class DBToken(val user: DBUser, val creationTime: Long) {
 
     companion object {
         fun fromString(s: String): DBToken? {
-            val array = s.toCharArray()
-            val builder = StringBuilder()
-            for (i in array.indices step 2) {
-                val sum = array[i].digitToInt(16) + array[i+1].digitToInt(16) * 16
-                builder.append(sum.toChar())
+            try {
+                val array = s.toCharArray()
+                val builder = StringBuilder()
+                // no out of bounds for array[i + 1]
+                if (array.size % 2 != 0) return null
+
+                for (i in array.indices step 2) {
+                    // decode both parts of the byte
+                    val sum = array[i].digitToInt(16) + array[i + 1].digitToInt(16) * 16
+                    builder.append(sum.toChar())
+                }
+                val decoded = builder.toString()
+                // string-separated parameters
+                val split = decoded.split(' ')
+                if (split.size != 3) return null
+                val user = DBUser(split[0], split[1])
+                val creationTime = split[2].toLongOrNull() ?: return null
+                return DBToken(user, creationTime)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                return null
             }
-            val decoded = builder.toString()
-            val split = decoded.split(' ')
-            if (split.size != 3) return null
-            val user = DBUser(split[0], split[1])
-            val creationTime = split[2].toLongOrNull() ?: return null
-            return DBToken(user, creationTime)
         }
     }
 
     override fun toString(): String {
         val unencoded = "${user.name} ${user.passHash} $creationTime"
-        println(unencoded.toByteArray().joinToString("") { it.toString(16) })
-        println(unencoded.toByteArray().joinToString("") { String.format("%02x", it) })
-        return unencoded.toByteArray().joinToString("") { it.toString(16) }
+        return unencoded.toByteArray().joinToString("") { String.format("%02x", it) }
     }
 }

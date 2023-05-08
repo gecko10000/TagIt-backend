@@ -1,6 +1,7 @@
 package gecko10000.tagit
 
 import gecko10000.tagit.db.DBToken
+import gecko10000.tagit.db.DBUser
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.routing.*
@@ -9,6 +10,7 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.routing.*
 import kcash.kcash.misc.Database
@@ -30,12 +32,14 @@ fun main() {
         install(Authentication) {
             bearer("auth-bearer") {
                 authenticate { tokenCredential ->
-                    val token = DBToken.fromString(tokenCredential.token) ?: return@authenticate null
+                    val token = DBToken(DBUser("hello", "world"), 1234)
+                    //val token = DBToken.fromString(tokenCredential.token) ?: return@authenticate null
                     println(token)
                     UserIdPrincipal(token.user.name)
                 }
             }
         }
+        install(CallLogging)
         routing {
             fileRouting()
             tagRouting()
