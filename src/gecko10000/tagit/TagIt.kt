@@ -1,7 +1,5 @@
 package gecko10000.tagit
 
-import gecko10000.tagit.db.DBToken
-import gecko10000.tagit.db.DBUser
 import gecko10000.tagit.objects.SavedFile
 import gecko10000.tagit.objects.Tag
 import gecko10000.tagit.routing.*
@@ -31,11 +29,9 @@ fun main() {
         }
         install(Authentication) {
             bearer("auth-bearer") {
-                authenticate { tokenCredential ->
-                    val token = DBToken(DBUser("hello", "world"), 1234)
-                    //val token = DBToken.fromString(tokenCredential.token) ?: return@authenticate null
-                    println(token)
-                    UserIdPrincipal(token.user.name)
+                authenticate { cred ->
+                    val user = db.userFromToken(cred.token)
+                    user?.name?.let { UserIdPrincipal(it) }
                 }
             }
         }
