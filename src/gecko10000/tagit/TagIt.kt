@@ -44,6 +44,7 @@ fun main() {
                 searchRouting()
             }
             authRouting()
+            idRouting()
         }
     }.start(wait = true)
 }
