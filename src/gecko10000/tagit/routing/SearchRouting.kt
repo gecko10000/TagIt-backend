@@ -37,6 +37,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.searchTags() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.searchFiles() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
+    if (searchInput.isEmpty()) return call.respondJson(listOf<SavedFile>())
     val parsedSearch = parseSearchInput(call, searchInput) ?: return
     val foundFiles = savedFiles.values.filter { parsedSearch.test(it) }.toList()
     call.respondJson(foundFiles)
