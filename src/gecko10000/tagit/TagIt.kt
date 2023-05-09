@@ -37,10 +37,12 @@ fun main() {
         }
         install(CallLogging)
         routing {
-            fileRouting()
-            tagRouting()
-            retrievalRouting()
-            searchRouting()
+            authenticate("auth-bearer") {
+                fileRouting()
+                tagRouting()
+                retrievalRouting()
+                searchRouting()
+            }
             authRouting()
         }
     }.start(wait = true)

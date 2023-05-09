@@ -54,6 +54,7 @@ fun Route.authRouting() {
                 register()
             }
         }
+        // only non-authenticated endpoint
         post("login") {
             login()
         }
