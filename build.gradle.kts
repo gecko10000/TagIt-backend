@@ -2,19 +2,40 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // useful tasks:
 // run - run the program directly
-// installDist - creates a bash script in build/install/
-// distZip - creates a zip in build/distributions/
+// shadowJar - create an executable jarfile
+
+// usable in the project as `VERSION` - if not, run the generateVersion task.
+version = "0.1"
 
 plugins {
     kotlin("jvm") version "1.8.20"
     kotlin("plugin.serialization") version "1.8.20"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     application
+}
+
+// generates a file with the current version in it
+// https://stackoverflow.com/a/74771876
+val generateVersion by tasks.registering(Sync::class) {
+    val pkg = listOf("gecko10000", "tagit", "misc")
+    val resource = project.resources.text.fromString("""
+        |package ${pkg.joinToString(".")}
+        |
+        |const val VERSION = "$version"
+        |
+    """.trimMargin())
+    from(resource) {
+        rename { "Version.kt" }
+        into(pkg.joinToString("/"))
+    }
+    into(layout.buildDirectory.dir("generated/src/"))
 }
 
 sourceSets {
     main {
         java {
             srcDir("src")
+            srcDir(generateVersion.map { it.destinationDir })
         }
         resources {
             srcDir("res")
@@ -23,7 +44,6 @@ sourceSets {
 }
 
 group = "gecko10000.tagit"
-version = "0.1"
 
 repositories {
     mavenCentral()
@@ -50,9 +70,18 @@ dependencies {
 
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+kotlin {
+    jvmToolchain(11)
 }
+
+tasks.withType<Wrapper> {
+    dependsOn(generateVersion)
+}
+
+tasks.withType<KotlinCompile> {
+    dependsOn(generateVersion)
+}
+
 
 application {
     mainClass.set("gecko10000.tagit.TagItKt")
