@@ -6,6 +6,7 @@ import gecko10000.tagit.misc.hash
 import gecko10000.tagit.misc.respondJson
 import gecko10000.tagit.misc.verify
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
@@ -26,9 +27,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.register() {
     val passHash = hash(password.toCharArray())
     val user = DBUser(username, passHash)
     db.addUser(user)
-    val token = newToken(user)
-    db.insertToken(token, user)
-    return call.respondJson(mapOf("token" to token))
+    call.respond(OK)
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.login() {
