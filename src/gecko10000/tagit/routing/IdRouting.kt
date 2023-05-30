@@ -2,14 +2,15 @@ package gecko10000.tagit.routing
 
 import gecko10000.tagit.db
 import gecko10000.tagit.misc.VERSION
+import gecko10000.tagit.misc.respondJson
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.json.JsonPrimitive
 
 fun Routing.idRouting() {
     route("/tagit") {
         get("version") {
-            call.respond(mapOf("version" to VERSION, "users" to db.countUsers()))
+            call.respondJson(mapOf("version" to JsonPrimitive(VERSION), "users" to JsonPrimitive(db.countUsers())))
         }
     }
 }
