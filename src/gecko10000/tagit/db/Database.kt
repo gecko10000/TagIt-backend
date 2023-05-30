@@ -41,6 +41,8 @@ class Database {
         return DBUser(results.getString(1)!!, results.getString(2)!!)
     }
 
+    fun countUsers(): Int = sql.querySingleResult<Int>("SELECT COUNT(*) FROM users;")!!
+
     fun insertToken(token: String, user: DBUser) {
         // having a creation time will let us expire tokens (should we?)
         sql.execute("INSERT OR IGNORE INTO user_tokens VALUES (?, ?, ?);", token, System.currentTimeMillis(), user.name)

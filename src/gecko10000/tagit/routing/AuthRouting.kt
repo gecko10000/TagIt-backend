@@ -19,6 +19,12 @@ import java.util.*
 private fun newToken(user: DBUser) = UUID.randomUUID().toString()
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.register() {
+    // this endpoint can be called unauthenticated,
+    // but only when there are no users in the database
+    val principal = call.principal<UserIdPrincipal>()
+    if (principal == null && db.countUsers() != 0) {
+        return call.respond(BadRequest, "You must be logged in to create extra users.")
+    }
     val params = call.receiveParameters()
     val username = params["username"] ?: return call.respond(BadRequest, "No username provided.")
     val password = params["password"] ?: return call.respond(BadRequest, "No password provided.")
@@ -48,7 +54,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.login() {
 fun Route.authRouting() {
     route("/auth") {
         // only existing users can create new accounts
-        authenticate("auth-bearer") {
+        authenticate("auth-bearer", optional = true) {
             post("register") {
                 register()
             }
