@@ -100,7 +100,7 @@ private suspend fun parseSearchInput(call: ApplicationCall, input: String): Pred
             null
         }
         // string is 1-indexed so we need to subtract 1 from the index that errors
-        call.respond(HttpStatusCode.UnprocessableEntity, index.toIntOrNull()?.dec().toString())
+        call.respondJson(mapOf("index" to index.toIntOrNull()?.dec().toString()), statusCode = HttpStatusCode.UnprocessableEntity)
     } catch (ex: Exception) {
         ex.printStackTrace()
         throw ex
