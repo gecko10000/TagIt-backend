@@ -10,7 +10,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.io.File
 
-class FileSerializer : KSerializer<File> {
+class FileInfoSerializer : KSerializer<File> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("File") {
         element<String>("name")
         element<String>("mimeType")
