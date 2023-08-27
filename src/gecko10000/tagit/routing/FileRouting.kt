@@ -34,10 +34,10 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getFile() {
 
 
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.getTags() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.getInfo() {
     val savedFile = ensureFileExists(call) ?: return
     //println(Json.encodeToString(savedFile.tags))
-    call.respondJson(savedFile.tags)
+    call.respondJson(savedFile)
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
@@ -119,8 +119,8 @@ fun Route.fileRouting() {
         get("{name}") {
             this.getFile()
         }
-        get("{name}/tags") {
-            this.getTags()
+        get("{name}/info") {
+            this.getInfo()
         }
         post("{name}") {
             this.postFile()
