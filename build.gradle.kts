@@ -67,7 +67,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.41.2.1")
     implementation("ch.qos.logback:logback-classic:1.4.7")
     implementation("de.mkammerer:argon2-jvm:2.11")
-
+    implementation("net.bramp.ffmpeg:ffmpeg:0.7.0")
 }
 
 kotlin {

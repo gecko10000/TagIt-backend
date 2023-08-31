@@ -18,6 +18,9 @@ data class Tag(
 
     val files: MutableSet<@Serializable(with = SavedFileStringSerializer::class) SavedFile> = ConcurrentSkipListSet(compareBy { it.file.name })
 ) {
+    val totalFiles: Int
+        get() = setOfTotalFiles().size
+    private fun setOfTotalFiles(): Set<SavedFile> = buildSet { children.map { it.setOfTotalFiles() }.forEach { addAll(it) } }
 
     fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
     fun getDirectory() = File(tagDirectory + fullName())

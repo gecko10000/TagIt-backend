@@ -59,7 +59,10 @@ class FileManager {
     }
 
     fun addTags(savedFile: SavedFile, vararg toAdd: Tag, link: Boolean = true) {
-        savedFile.tags.addAll(toAdd)
+        savedFiles[savedFile.name] = SavedFile(savedFile.file, buildSet {
+            addAll(savedFile.tags)
+            addAll(toAdd)
+        })
         for (tag in toAdd) {
             tag.files.add(savedFile)
             if (link) {
@@ -70,7 +73,10 @@ class FileManager {
     }
 
     fun removeTags(savedFile: SavedFile, vararg toRemove: Tag) {
-        savedFile.tags.removeAll(toRemove.toSet())
+        savedFiles[savedFile.name] = SavedFile(savedFile.file, buildSet {
+            addAll(savedFile.tags)
+            removeAll(toRemove.toSet())
+        })
         for (tag in toRemove) {
             tag.files.remove(savedFile)
             tag.getDirectory().resolve(savedFile.file.name).delete()
