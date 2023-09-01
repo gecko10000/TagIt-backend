@@ -2,7 +2,7 @@ package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileManager
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.objects.Tag
+import gecko10000.tagit.model.TagEntity
 import gecko10000.tagit.tags
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,7 +17,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 
 private fun getTagName(call: ApplicationCall) = call.parameters["name"]?.trimEnd('/')
 
-private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
+private suspend fun ensureTagExists(call: ApplicationCall): TagEntity? {
     val name = getTagName(call)
     val existing = tags[name]
     // TODO: check filesystem?

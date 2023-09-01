@@ -2,8 +2,9 @@ package gecko10000.tagit
 
 import gecko10000.tagit.misc.fileDirectory
 import gecko10000.tagit.misc.tagDirectory
-import gecko10000.tagit.objects.SavedFile
-import gecko10000.tagit.objects.Tag
+import gecko10000.tagit.misc.thumbnailDirectory
+import gecko10000.tagit.model.SavedFileEntity
+import gecko10000.tagit.model.TagEntity
 import java.io.File
 import java.nio.file.Files
 import kotlin.system.exitProcess
@@ -15,11 +16,11 @@ class FileManager {
         if (filesDir.exists() && !filesDir.isDirectory) exitProcess(1) // files exists and is not a directory
         filesDir.mkdir()
         for (file in filesDir.listFiles()!!) {
-            savedFiles[file.name] = SavedFile(file)
+            savedFiles[file.name] = SavedFileEntity(file)
         }
     }
 
-    private fun loadTagsRecursively(file: File, parent: Tag?) {
+    private fun loadTagsRecursively(file: File, parent: TagEntity?) {
         if (!file.isDirectory) {
             val savedFile = savedFiles[file.name]
             // TODO: check if the file is actually hardlinked to the same name? what would even happen in that situation?
@@ -32,7 +33,7 @@ class FileManager {
             return
         }
         // file is a directory, create tag and call recursively
-        val tag = Tag(file.name, parent)
+        val tag = TagEntity(file.name, parent)
         tags[tag.fullName()] = tag
         parent?.children?.add(tag)
         for (f in file.listFiles()!!) {
@@ -58,8 +59,8 @@ class FileManager {
         }
     }
 
-    fun addTags(savedFile: SavedFile, vararg toAdd: Tag, link: Boolean = true) {
-        savedFiles[savedFile.name] = SavedFile(savedFile.file, buildSet {
+    fun addTags(savedFile: SavedFileEntity, vararg toAdd: TagEntity, link: Boolean = true) {
+        savedFiles[savedFile.file.name] = SavedFileEntity(savedFile.file, buildSet {
             addAll(savedFile.tags)
             addAll(toAdd)
         })
@@ -72,8 +73,8 @@ class FileManager {
         }
     }
 
-    fun removeTags(savedFile: SavedFile, vararg toRemove: Tag) {
-        savedFiles[savedFile.name] = SavedFile(savedFile.file, buildSet {
+    fun removeTags(savedFile: SavedFileEntity, vararg toRemove: TagEntity) {
+        savedFiles[savedFile.file.name] = SavedFileEntity(savedFile.file, buildSet {
             addAll(savedFile.tags)
             removeAll(toRemove.toSet())
         })
@@ -83,13 +84,13 @@ class FileManager {
         }
     }
 
-    fun createTag(name: String): Tag? {
+    fun createTag(name: String): TagEntity? {
         // return existing
         tags[name]?.let { return it }
         val slashIndex = name.indexOfLast { c -> c == '/' }
         // create tags recursively
         val parent = if (slashIndex == -1) null else createTag(name.substring(0, slashIndex))
-        val tag = Tag(name.substring(slashIndex + 1), parent)
+        val tag = TagEntity(name.substring(slashIndex + 1), parent)
         if (!tag.getDirectory().mkdirs()) return null
         parent?.children?.add(tag)
         tags[name] = tag
@@ -100,7 +101,7 @@ class FileManager {
     // move files to tag
     // renameTag on children
     // delete tag from map
-    fun renameTag(tag: Tag, newName: String): Boolean {
+    fun renameTag(tag: TagEntity, newName: String): Boolean {
         val newTag = createTag(newName) ?: return false
         for (file in tag.files) {
             removeTags(file, tag)
@@ -114,13 +115,14 @@ class FileManager {
         return ok
     }
 
-    fun deleteTag(tag: Tag) {
+    fun deleteTag(tag: TagEntity) {
         tag.parent?.children?.remove(tag)
         tags.remove(tag.fullName())
         tag.getDirectory().deleteRecursively()
     }
 
     init {
+        File(thumbnailDirectory).mkdir()
         loadFiles()
         loadTags()
     }

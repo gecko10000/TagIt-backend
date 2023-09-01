@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.objects.SavedFile
+import gecko10000.tagit.model.SavedFileEntity
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
@@ -37,7 +37,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.searchTags() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.searchFiles() {
     val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
-    if (searchInput.isEmpty()) return call.respondJson(listOf<SavedFile>())
+    if (searchInput.isEmpty()) return call.respondJson(listOf<SavedFileEntity>())
     val parsedSearch = parseSearchInput(call, searchInput) ?: return
     val foundFiles = savedFiles.values.filter { parsedSearch.test(it) }.toList()
     call.respondJson(foundFiles)
@@ -57,12 +57,12 @@ private val parser = Parser.create(
     },
     ParserComponent.mapChildren("query") {
         //if (it.size != 3) it[0]
-        var predicate = it[0] as Predicate<SavedFile>
+        var predicate = it[0] as Predicate<SavedFileEntity>
         lateinit var operator: BinaryOperator
         for (i in IntRange(1, it.size - 1)) {
             // query
             if (i % 2 == 0) {
-                predicate = operator.apply(predicate, it[i] as Predicate<SavedFile>)
+                predicate = operator.apply(predicate, it[i] as Predicate<SavedFileEntity>)
             } else operator = it[i] as BinaryOperator
         }
         predicate
@@ -74,22 +74,22 @@ private val parser = Parser.create(
     ParserComponent.mapString("file") { s ->
         // we get file:[ ]*<filename> so we have to remove the leading text
         val sub = s.substringAfter(':').trimStart()
-        Predicate<SavedFile>{ it.file.name.contains(sub) }
+        Predicate<SavedFileEntity>{ it.file.name.contains(sub) }
     },
     ParserComponent.mapString("tag") { s ->
-        Predicate<SavedFile>{ it.tags.any { t -> t.fullName().contains(s) }}
+        Predicate<SavedFileEntity>{ it.tags.any { t -> t.fullName().contains(s) }}
     },
     ParserComponent.mapChildren("not") {
-        Predicate.not(it[0] as Predicate<SavedFile>)
+        Predicate.not(it[0] as Predicate<SavedFileEntity>)
     },
     ParserComponent.mapString("word") { it },
 )
 
 private val errorRegex = Regex("column ([0-9]+)")
-private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<SavedFile>? {
+private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<SavedFileEntity>? {
     try {
         @Suppress("UNCHECKED_CAST")
-        return parser.parse(input) as Predicate<SavedFile>
+        return parser.parse(input) as Predicate<SavedFileEntity>
     } catch (ex: LexException) {
         val message = ex.message ?: return run {
             call.respond(HttpStatusCode.InternalServerError, "Parser error message was empty.")

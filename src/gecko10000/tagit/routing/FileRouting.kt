@@ -3,7 +3,7 @@ package gecko10000.tagit.routing
 import gecko10000.tagit.fileManager
 import gecko10000.tagit.misc.fileDirectory
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.objects.SavedFile
+import gecko10000.tagit.model.SavedFileEntity
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
 
-private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
+private suspend fun ensureFileExists(call: ApplicationCall): SavedFileEntity? {
     val name = call.parameters["name"]
     val existing = savedFiles[name]
     // TODO: check filesystem?
@@ -48,7 +48,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     val stream = call.receiveStream()
     val file = File("$fileDirectory$name")
     file.createNewFile()
-    savedFiles[name] = SavedFile(file)
+    savedFiles[name] = SavedFileEntity(file)
     withContext(Dispatchers.IO) {
         try {
             stream.transferTo(file.outputStream())
@@ -73,7 +73,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
     fileManager.removeTags(existing, *tags)
     savedFiles.remove(call.parameters["name"])
 
-    val newSavedFile = SavedFile(newFile)
+    val newSavedFile = SavedFileEntity(newFile)
     savedFiles[newName] = newSavedFile
     fileManager.addTags(newSavedFile, *tags)
     call.respond(HttpStatusCode.OK)

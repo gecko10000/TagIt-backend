@@ -18,12 +18,14 @@ plugins {
 // https://stackoverflow.com/a/74771876
 val generateVersion by tasks.registering(Sync::class) {
     val pkg = listOf("gecko10000", "tagit", "misc")
-    val resource = project.resources.text.fromString("""
+    val resource = project.resources.text.fromString(
+        """
         |package ${pkg.joinToString(".")}
         |
         |const val VERSION = "$version"
         |
-    """.trimMargin())
+    """.trimMargin()
+    )
     from(resource) {
         rename { "Version.kt" }
         into(pkg.joinToString("/"))
@@ -68,6 +70,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.7")
     implementation("de.mkammerer:argon2-jvm:2.11")
     implementation("net.bramp.ffmpeg:ffmpeg:0.7.0")
+    implementation("org.yaml:snakeyaml:2.2")
 }
 
 kotlin {
