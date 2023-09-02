@@ -1,6 +1,6 @@
 package gecko10000.tagit.routing
 
-import gecko10000.tagit.misc.extensions.respondJson
+import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags

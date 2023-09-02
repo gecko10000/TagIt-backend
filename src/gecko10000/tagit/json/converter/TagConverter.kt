@@ -1,7 +1,7 @@
 package gecko10000.tagit.json.converter
 
 import com.google.common.base.Converter
-import gecko10000.tagit.json.objects.JsonTag
+import gecko10000.tagit.json.`object`.JsonTag
 import gecko10000.tagit.model.Tag
 
 class TagConverter : Converter<Tag, JsonTag>() {

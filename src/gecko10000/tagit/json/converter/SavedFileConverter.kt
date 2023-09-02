@@ -1,8 +1,8 @@
 package gecko10000.tagit.json.converter
 
 import com.google.common.base.Converter
-import gecko10000.tagit.json.enums.MediaType
-import gecko10000.tagit.json.objects.JsonSavedFile
+import gecko10000.tagit.json.enum.MediaType
+import gecko10000.tagit.json.`object`.JsonSavedFile
 import gecko10000.tagit.model.SavedFile
 import java.nio.file.Files
 

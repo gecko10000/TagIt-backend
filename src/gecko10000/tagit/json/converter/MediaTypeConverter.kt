@@ -1,7 +1,7 @@
 package gecko10000.tagit.json.converter
 
 import com.google.common.base.Converter
-import gecko10000.tagit.json.enums.MediaType
+import gecko10000.tagit.json.enum.MediaType
 
 class MediaTypeConverter : Converter<String, MediaType>() {
     override fun doForward(mimeType: String): MediaType {

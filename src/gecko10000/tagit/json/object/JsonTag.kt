@@ -1,4 +1,4 @@
-package gecko10000.tagit.json.objects
+package gecko10000.tagit.json.`object`
 
 import kotlinx.serialization.Serializable
 

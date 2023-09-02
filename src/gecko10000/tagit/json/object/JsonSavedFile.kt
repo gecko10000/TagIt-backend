@@ -1,6 +1,6 @@
-package gecko10000.tagit.json.objects
+package gecko10000.tagit.json.`object`
 
-import gecko10000.tagit.json.enums.MediaType
+import gecko10000.tagit.json.enum.MediaType
 import kotlinx.serialization.Serializable
 
 @Serializable
