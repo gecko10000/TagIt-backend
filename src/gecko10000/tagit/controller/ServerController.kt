@@ -1,6 +1,7 @@
 package gecko10000.tagit.controller
 
-import gecko10000.tagit.misc.Config
+import gecko10000.tagit.config
+import gecko10000.tagit.db
 import gecko10000.tagit.routing.*
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -11,10 +12,7 @@ import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.routing.*
 
-class ServerController(
-    val db: DatabaseController,
-    val config: Config,
-) {
+class ServerController {
     fun create(): ApplicationEngine {
         return embeddedServer(Netty, port = config.port) {
             install(CORS) {

@@ -1,6 +1,7 @@
 package gecko10000.tagit.controller
 
-import gecko10000.tagit.misc.DataDirectory
+import gecko10000.tagit.dataDirectory
+import gecko10000.tagit.fileController
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
 import org.slf4j.Logger
@@ -9,8 +10,6 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 class TagController(
-    private val dataDirectory: DataDirectory,
-    private val fileController: FileController,
     private val files: ConcurrentHashMap<String, SavedFile>,
     private val tags: ConcurrentHashMap<String, Tag>,
 ) {
@@ -50,6 +49,14 @@ class TagController(
         }
         deleteTag(tag)
         return success
+    }
+
+    operator fun get(fullName: String?): Tag? {
+        return tags[fullName]
+    }
+
+    fun readOnlyTagMap(): Map<String, Tag> {
+        return tags.toMap()
     }
 
     fun deleteTag(tag: Tag) {

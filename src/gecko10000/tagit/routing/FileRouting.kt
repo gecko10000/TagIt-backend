@@ -1,141 +1,110 @@
 package gecko10000.tagit.routing
 
-import gecko10000.tagit.fileManager
+import gecko10000.tagit.fileController
+import gecko10000.tagit.json.mapper.Mapper
 import gecko10000.tagit.misc.extension.respondJson
-import gecko10000.tagit.misc.fileDirectory
 import gecko10000.tagit.model.SavedFile
-import gecko10000.tagit.savedFiles
-import gecko10000.tagit.tags
+import gecko10000.tagit.tagController
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import java.io.File
-import java.io.IOException
 
 private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     val name = call.parameters["name"]
-    val existing = savedFiles[name]
-    // TODO: check filesystem?
+    val existing = fileController[name]
     existing ?: call.respond(HttpStatusCode.NotFound, "File not found.")
     return existing
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.getFile() {
-    val savedFile = ensureFileExists(call) ?: return
-    call.respondFile(savedFile.file)
+private fun Route.getFileRoute() {
+    get("{name}") {
+        val savedFile = ensureFileExists(call) ?: return@get
+        call.respondFile(savedFile.file)
+    }
 }
 
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.getInfo() {
-    val savedFile = ensureFileExists(call) ?: return
-    //println(Json.encodeToString(savedFile.tags))
-    call.respondJson(savedFile)
+private fun Route.getFileInfoRoute() {
+    get("{name}/info") {
+        val savedFile = ensureFileExists(call) ?: return@get
+        call.respondJson(Mapper.SAVED_FILE.apply(savedFile))
+    }
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
-    val name = call.parameters["name"]!!
-    if (name.contains('/')) return call.respond(HttpStatusCode.Forbidden, "Slashes not allowed in filename.")
-    val existing = savedFiles[name]
-    existing?.run { return@postFile call.respond(HttpStatusCode.Forbidden, "File already exists.") }
-    val stream = call.receiveStream()
-    val file = File("$fileDirectory$name")
-    file.createNewFile()
-    savedFiles[name] = SavedFile(file)
-    withContext(Dispatchers.IO) {
-        try {
-            stream.transferTo(file.outputStream())
-        } catch (ex: IOException) {
-            call.respond(HttpStatusCode.InternalServerError, ex)
-            savedFiles.remove(name)
-            return@withContext
+private fun Route.uploadFileRoute() {
+    post("{name}") {
+        val name = call.parameters["name"]!!
+        if (name.contains('/')) return@post call.respond(HttpStatusCode.BadRequest, "Slashes not allowed in filename.")
+        val existing = fileController[name]
+        existing?.run { return@post call.respond(HttpStatusCode.BadRequest, "File already exists.") }
+        val stream = call.receiveStream()
+        withContext(Dispatchers.IO) {
+            fileController.addFile(stream, name, call)
+            stream.close()
+            call.respond(HttpStatusCode.OK)
         }
+    }
+}
+
+private fun Route.renameFileRoute() {
+    patch("{name}") {
+        val existing = ensureFileExists(call) ?: return@patch
+        val params = call.receiveParameters()
+        val newName = params["name"] ?: return@patch call.respond(HttpStatusCode.BadRequest, "No new name sent.")
+        if (newName.contains('/')) return@patch call.respond(
+            HttpStatusCode.BadRequest,
+            "Slashes not allowed in filename."
+        )
+        fileController.renameFile(existing, newName, call)
         call.respond(HttpStatusCode.OK)
     }
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
-    val existing = ensureFileExists(call) ?: return
-    val params = call.receiveParameters()
-    val newName = params["name"] ?: return call.respond(HttpStatusCode.BadRequest, "No new name sent.")
-    if (newName.contains('/')) return call.respond(HttpStatusCode.Forbidden, "Slashes not allowed in filename.")
-    val newFile = existing.file.parentFile.resolve(newName)
-    if (newFile.exists()) return call.respond(HttpStatusCode.Forbidden, "New filename already exists.")
-    existing.file.renameTo(newFile)
-    val tags = existing.tags.toTypedArray()
-    fileManager.removeTags(existing, *tags)
-    savedFiles.remove(call.parameters["name"])
-
-    val newSavedFile = SavedFile(newFile)
-    savedFiles[newName] = newSavedFile
-    fileManager.addTags(newSavedFile, *tags)
-    call.respond(HttpStatusCode.OK)
-}
-
-private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
-    val existing = ensureFileExists(call) ?: return
-    val params = call.receiveParameters()
-    val sentTagNames = params["tags"]?.let { Json.decodeFromString<Array<String>>(it) }?.map { it.trimEnd('/') }
-    val sentTags = sentTagNames?.mapNotNull { tags[it] ?: fileManager.createTag(it) }
-    if (sentTags.isNullOrEmpty()) {
-        call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
-        return
+private fun Route.addTagRoute() {
+    patch("{name}/add") {
+        val existing = ensureFileExists(call) ?: return@patch
+        val params = call.receiveParameters()
+        val tagName = params["tag"]?.trimEnd('/')
+        val tag = tagName?.let { tagController[it] ?: tagController.createTag(it) }
+        tag ?: return@patch call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
+        fileController.addTag(existing, tag)
+        call.respond(HttpStatusCode.OK)
     }
-    // add tags to file
-    fileManager.addTags(existing, *sentTags.toTypedArray())
-    call.respond(HttpStatusCode.OK)
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
-    val existing = ensureFileExists(call) ?: return
-    val params = call.receiveParameters()
-    val sentTags =
-        params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it.trimEnd('/')] }
-    if (sentTags.isNullOrEmpty()) {
-        call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
-        return
+private fun Route.removeTagRoute() {
+    patch("{name}/remove") {
+        val existing = ensureFileExists(call) ?: return@patch
+        val params = call.receiveParameters()
+        val tagName = params["tag"]?.trimEnd('/')
+        val tag = tagController[tagName]
+        tag ?: return@patch call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
+        // remove tags from file
+        fileController.removeTag(existing, tag)
+        call.respond(HttpStatusCode.OK)
     }
-    // remove tags from file
-    fileManager.removeTags(existing, *sentTags.toTypedArray())
-    call.respond(HttpStatusCode.OK)
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.deleteFile() {
-    val existing = ensureFileExists(call) ?: return
-    fileManager.removeTags(existing, *existing.tags.toTypedArray())
-    existing.file.delete()
-    savedFiles.remove(call.parameters["name"])
-    call.respond(HttpStatusCode.OK)
+private fun Route.deleteFileRoute() {
+    delete("{name}") {
+        val existing = ensureFileExists(call) ?: return@delete
+        fileController.deleteFile(existing)
+        call.respond(HttpStatusCode.OK)
+    }
 }
 
 fun Route.fileRouting() {
     route("/file") {
-        get("{name}") {
-            this.getFile()
-        }
-        get("{name}/info") {
-            this.getInfo()
-        }
-        post("{name}") {
-            this.postFile()
-        }
-        patch("{name}") {
-            this.patchRenameFile()
-        }
-        patch("{name}/add") {
-            this.patchAddTags()
-        }
-        patch("{name}/remove") {
-            this.patchRemoveTags()
-        }
-        delete("{name}") {
-            this.deleteFile()
-        }
+        getFileRoute()
+        getFileInfoRoute()
+        uploadFileRoute()
+        renameFileRoute()
+        addTagRoute()
+        removeTagRoute()
+        deleteFileRoute()
     }
 }

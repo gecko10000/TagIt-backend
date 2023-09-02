@@ -1,11 +1,11 @@
 package gecko10000.tagit.controller
 
+import gecko10000.tagit.dataDirectory
 import gecko10000.tagit.db.DBUser
 import gecko10000.tagit.db.SQLHelper
-import java.io.File
 
 class DatabaseController {
-    private val sql: SQLHelper = SQLHelper(SQLHelper.openSQLite(File("database.db").toPath()))
+    private val sql: SQLHelper = SQLHelper(SQLHelper.openSQLite(dataDirectory.base.resolve("database.db").toPath()))
 
     init {
         createTables()

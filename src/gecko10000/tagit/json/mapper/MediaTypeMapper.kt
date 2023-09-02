@@ -1,10 +1,11 @@
-package gecko10000.tagit.json.converter
+package gecko10000.tagit.json.mapper
 
-import com.google.common.base.Converter
 import gecko10000.tagit.json.enum.MediaType
+import java.util.function.Function
 
-class MediaTypeConverter : Converter<String, MediaType>() {
-    override fun doForward(mimeType: String): MediaType {
+class MediaTypeMapper : Function<String, MediaType> {
+
+    override fun apply(mimeType: String): MediaType {
         if (mimeType.startsWith("image")) {
             return MediaType.IMAGE
         } else if (mimeType.startsWith("video")) {
@@ -15,9 +16,5 @@ class MediaTypeConverter : Converter<String, MediaType>() {
             return MediaType.TEXT
         }
         return MediaType.UNKNOWN
-    }
-
-    override fun doBackward(mediaType: MediaType): String {
-        throw NotImplementedError()
     }
 }

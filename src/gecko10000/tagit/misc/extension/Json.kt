@@ -8,5 +8,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 suspend inline fun <reified T> ApplicationCall.respondJson(toEncode: T, statusCode: HttpStatusCode = OK) {
-    this.respondText(Json.encodeToString(toEncode), contentType = ContentType.Application.Json, status = statusCode)
+    this.respondText(
+        Json.encodeToString(toEncode),
+        contentType = ContentType.Application.Json,
+        status = statusCode
+    )
 }

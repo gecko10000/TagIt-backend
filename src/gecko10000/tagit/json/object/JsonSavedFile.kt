@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class JsonSavedFile(
     val name: String,
-    val mimeType: MediaType,
+    val mediaType: MediaType,
     val modificationDate: Long,
     val fileSize: Long,
     val thumbnail: String?,
