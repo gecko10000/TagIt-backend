@@ -1,21 +1,15 @@
 package gecko10000.tagit
 
-import gecko10000.tagit.misc.fileDirectory
-import gecko10000.tagit.misc.tagDirectory
-import gecko10000.tagit.misc.thumbnailDirectory
+import gecko10000.tagit.misc.DataDirectory
 import gecko10000.tagit.model.SavedFileEntity
 import gecko10000.tagit.model.TagEntity
 import java.io.File
 import java.nio.file.Files
-import kotlin.system.exitProcess
 
 class FileManager {
 
     private fun loadFiles() {
-        val filesDir = File(fileDirectory)
-        if (filesDir.exists() && !filesDir.isDirectory) exitProcess(1) // files exists and is not a directory
-        filesDir.mkdir()
-        for (file in filesDir.listFiles()!!) {
+        for (file in DataDirectory.FILE.listFiles()!!) {
             savedFiles[file.name] = SavedFileEntity(file)
         }
     }
@@ -23,8 +17,6 @@ class FileManager {
     private fun loadTagsRecursively(file: File, parent: TagEntity?) {
         if (!file.isDirectory) {
             val savedFile = savedFiles[file.name]
-            // TODO: check if the file is actually hardlinked to the same name? what would even happen in that situation?
-            // file no longer exists in files/ so there's no need to keep the symlink around
             savedFile ?: run {
                 file.delete()
                 return
@@ -42,11 +34,7 @@ class FileManager {
     }
 
     private fun loadTags() {
-        val tagsDir = File(tagDirectory)
-        if (tagsDir.exists() && !tagsDir.isDirectory) exitProcess(2) // tags exists and is not a directory
-        tagsDir.mkdir()
-        for (tagDir in tagsDir.listFiles()!!) {
-            if (!tagDir.isDirectory) exitProcess(3) // non-directory in tags/
+        for (tagDir in DataDirectory.TAG.listFiles()!!) {
             loadTagsRecursively(tagDir, null)
         }
     }
@@ -67,7 +55,7 @@ class FileManager {
         for (tag in toAdd) {
             tag.files.add(savedFile)
             if (link) {
-                val tagDir = tag.getDirectory()
+                val tagDir = DataDirectory.getTagDirectory(tag)
                 createLink(tagDir, savedFile.file)
             }
         }
@@ -80,7 +68,7 @@ class FileManager {
         })
         for (tag in toRemove) {
             tag.files.remove(savedFile)
-            tag.getDirectory().resolve(savedFile.file.name).delete()
+            DataDirectory.getTagDirectory(tag).resolve(savedFile.file.name).delete()
         }
     }
 
@@ -91,7 +79,7 @@ class FileManager {
         // create tags recursively
         val parent = if (slashIndex == -1) null else createTag(name.substring(0, slashIndex))
         val tag = TagEntity(name.substring(slashIndex + 1), parent)
-        if (!tag.getDirectory().mkdirs()) return null
+        if (!DataDirectory.getTagDirectory(tag).mkdirs()) return null
         parent?.children?.add(tag)
         tags[name] = tag
         return tag
@@ -118,11 +106,10 @@ class FileManager {
     fun deleteTag(tag: TagEntity) {
         tag.parent?.children?.remove(tag)
         tags.remove(tag.fullName())
-        tag.getDirectory().deleteRecursively()
+        DataDirectory.getTagDirectory(tag).deleteRecursively()
     }
 
     init {
-        File(thumbnailDirectory).mkdir()
         loadFiles()
         loadTags()
     }
