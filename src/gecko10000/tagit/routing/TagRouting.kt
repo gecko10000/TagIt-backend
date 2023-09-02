@@ -2,7 +2,7 @@ package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileManager
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.model.TagEntity
+import gecko10000.tagit.model.Tag
 import gecko10000.tagit.tags
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,7 +17,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 
 private fun getTagName(call: ApplicationCall) = call.parameters["name"]?.trimEnd('/')
 
-private suspend fun ensureTagExists(call: ApplicationCall): TagEntity? {
+private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
     val name = getTagName(call)
     val existing = tags[name]
     // TODO: check filesystem?
@@ -40,7 +40,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.listTag() {
     val tag = ensureTagExists(call) ?: return
     val response = mapOf<String, JsonElement>(
         "children" to JsonArray(tag.children.map { Json.encodeToJsonElement(it) }),
-        "files" to JsonArray(tag.files.map{ Json.encodeToJsonElement(it) })
+        "files" to JsonArray(tag.files.map { Json.encodeToJsonElement(it) })
     )
     call.respondJson(response)
 

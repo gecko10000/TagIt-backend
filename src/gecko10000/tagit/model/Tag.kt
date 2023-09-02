@@ -1,15 +1,15 @@
 package gecko10000.tagit.model
 
-data class TagEntity(
+data class Tag(
     val name: String,
-    val parent: TagEntity? = null,
-    val children: Set<TagEntity> = setOf(),
-    val files: Set<SavedFileEntity> = setOf(),
+    val parent: Tag? = null,
+    val children: Set<Tag> = setOf(),
+    val files: Set<SavedFile> = setOf(),
 ) {
 
     fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
 
-    fun getAllFiles(): Set<SavedFileEntity> {
+    fun getAllFiles(): Set<SavedFile> {
         val childFiles = children.flatMap { it.getAllFiles() }
         return setOf(*files.toTypedArray(), *childFiles.toTypedArray())
     }
@@ -19,7 +19,7 @@ data class TagEntity(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as TagEntity
+        other as Tag
 
         return fullName() == other.fullName()
     }

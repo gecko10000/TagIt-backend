@@ -1,8 +1,8 @@
 package gecko10000.tagit
 
 import gecko10000.tagit.misc.Config
-import gecko10000.tagit.model.SavedFileEntity
-import gecko10000.tagit.model.TagEntity
+import gecko10000.tagit.model.SavedFile
+import gecko10000.tagit.model.Tag
 import gecko10000.tagit.routing.*
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -15,8 +15,8 @@ import io.ktor.server.routing.*
 import kcash.kcash.misc.Database
 import java.util.concurrent.ConcurrentHashMap
 
-val savedFiles = ConcurrentHashMap<String, SavedFileEntity>()
-val tags = ConcurrentHashMap<String, TagEntity>()
+val savedFiles = ConcurrentHashMap<String, SavedFile>()
+val tags = ConcurrentHashMap<String, Tag>()
 val fileManager = FileManager()
 val db = Database()
 

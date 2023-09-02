@@ -1,6 +1,6 @@
 package gecko10000.tagit.misc
 
-import gecko10000.tagit.model.TagEntity
+import gecko10000.tagit.model.Tag
 import java.io.File
 
 class DataDirectory {
@@ -10,7 +10,7 @@ class DataDirectory {
         val TAG = BASE.resolve("tags")
         val THUMBNAIL = BASE.resolve("thumbnails")
 
-        fun getTagDirectory(tag: TagEntity): File {
+        fun getTagDirectory(tag: Tag): File {
             return DataDirectory.TAG.resolve(tag.fullName())
         }
     }

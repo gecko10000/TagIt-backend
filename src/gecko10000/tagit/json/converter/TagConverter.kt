@@ -1,13 +1,13 @@
 package gecko10000.tagit.json.converter
 
 import com.google.common.base.Converter
-import gecko10000.tagit.json.objects.Tag
-import gecko10000.tagit.model.TagEntity
+import gecko10000.tagit.json.objects.JsonTag
+import gecko10000.tagit.model.Tag
 
-class TagConverter : Converter<TagEntity, Tag>() {
+class TagConverter : Converter<Tag, JsonTag>() {
 
-    override fun doForward(entity: TagEntity): Tag {
-        return Tag(
+    override fun doForward(entity: Tag): JsonTag {
+        return JsonTag(
             entity.name,
             entity.parent?.fullName(),
             entity.children.map { it.name }.toSortedSet(),
@@ -16,7 +16,7 @@ class TagConverter : Converter<TagEntity, Tag>() {
         )
     }
 
-    override fun doBackward(tag: Tag): TagEntity {
+    override fun doBackward(jsonTag: JsonTag): Tag {
         TODO("Not yet implemented")
     }
 }

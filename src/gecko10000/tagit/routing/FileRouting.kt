@@ -3,7 +3,7 @@ package gecko10000.tagit.routing
 import gecko10000.tagit.fileManager
 import gecko10000.tagit.misc.fileDirectory
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.model.SavedFileEntity
+import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
 
-private suspend fun ensureFileExists(call: ApplicationCall): SavedFileEntity? {
+private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     val name = call.parameters["name"]
     val existing = savedFiles[name]
     // TODO: check filesystem?
@@ -31,7 +31,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.getFile() {
     val savedFile = ensureFileExists(call) ?: return
     call.respondFile(savedFile.file)
 }
-
 
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.getInfo() {
@@ -48,7 +47,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.postFile() {
     val stream = call.receiveStream()
     val file = File("$fileDirectory$name")
     file.createNewFile()
-    savedFiles[name] = SavedFileEntity(file)
+    savedFiles[name] = SavedFile(file)
     withContext(Dispatchers.IO) {
         try {
             stream.transferTo(file.outputStream())
@@ -73,7 +72,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchRenameFile() {
     fileManager.removeTags(existing, *tags)
     savedFiles.remove(call.parameters["name"])
 
-    val newSavedFile = SavedFileEntity(newFile)
+    val newSavedFile = SavedFile(newFile)
     savedFiles[newName] = newSavedFile
     fileManager.addTags(newSavedFile, *tags)
     call.respond(HttpStatusCode.OK)
@@ -96,7 +95,8 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.patchAddTags() {
 private suspend fun PipelineContext<Unit, ApplicationCall>.patchRemoveTags() {
     val existing = ensureFileExists(call) ?: return
     val params = call.receiveParameters()
-    val sentTags = params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it.trimEnd('/')] }
+    val sentTags =
+        params["tags"]?.run { Json.decodeFromString<Array<String>>(this) }?.mapNotNull { tags[it.trimEnd('/')] }
     if (sentTags.isNullOrEmpty()) {
         call.respond(HttpStatusCode.BadRequest, "No valid tags sent.")
         return

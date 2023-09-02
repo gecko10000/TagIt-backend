@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.model.SavedFileEntity
+import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
@@ -11,7 +11,7 @@ import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import java.util.*
 
-enum class Order(val comparator: Comparator<SavedFileEntity>) {
+enum class Order(val comparator: Comparator<SavedFile>) {
     ALPHABETICAL(compareBy { it.file.name }),
     DATE_MODIFIED(compareBy { it.file.lastModified() }),
     SIZE(compareBy { it.file.length() }),

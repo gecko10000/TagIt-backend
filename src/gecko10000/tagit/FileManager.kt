@@ -1,8 +1,8 @@
 package gecko10000.tagit
 
 import gecko10000.tagit.misc.DataDirectory
-import gecko10000.tagit.model.SavedFileEntity
-import gecko10000.tagit.model.TagEntity
+import gecko10000.tagit.model.SavedFile
+import gecko10000.tagit.model.Tag
 import java.io.File
 import java.nio.file.Files
 
@@ -10,11 +10,11 @@ class FileManager {
 
     private fun loadFiles() {
         for (file in DataDirectory.FILE.listFiles()!!) {
-            savedFiles[file.name] = SavedFileEntity(file)
+            savedFiles[file.name] = SavedFile(file)
         }
     }
 
-    private fun loadTagsRecursively(file: File, parent: TagEntity?) {
+    private fun loadTagsRecursively(file: File, parent: Tag?) {
         if (!file.isDirectory) {
             val savedFile = savedFiles[file.name]
             savedFile ?: run {
@@ -25,7 +25,7 @@ class FileManager {
             return
         }
         // file is a directory, create tag and call recursively
-        val tag = TagEntity(file.name, parent)
+        val tag = Tag(file.name, parent)
         tags[tag.fullName()] = tag
         parent?.children?.add(tag)
         for (f in file.listFiles()!!) {
@@ -47,8 +47,8 @@ class FileManager {
         }
     }
 
-    fun addTags(savedFile: SavedFileEntity, vararg toAdd: TagEntity, link: Boolean = true) {
-        savedFiles[savedFile.file.name] = SavedFileEntity(savedFile.file, buildSet {
+    fun addTags(savedFile: SavedFile, vararg toAdd: Tag, link: Boolean = true) {
+        savedFiles[savedFile.file.name] = SavedFile(savedFile.file, buildSet {
             addAll(savedFile.tags)
             addAll(toAdd)
         })
@@ -61,8 +61,8 @@ class FileManager {
         }
     }
 
-    fun removeTags(savedFile: SavedFileEntity, vararg toRemove: TagEntity) {
-        savedFiles[savedFile.file.name] = SavedFileEntity(savedFile.file, buildSet {
+    fun removeTags(savedFile: SavedFile, vararg toRemove: Tag) {
+        savedFiles[savedFile.file.name] = SavedFile(savedFile.file, buildSet {
             addAll(savedFile.tags)
             removeAll(toRemove.toSet())
         })
@@ -72,13 +72,13 @@ class FileManager {
         }
     }
 
-    fun createTag(name: String): TagEntity? {
+    fun createTag(name: String): Tag? {
         // return existing
         tags[name]?.let { return it }
         val slashIndex = name.indexOfLast { c -> c == '/' }
         // create tags recursively
         val parent = if (slashIndex == -1) null else createTag(name.substring(0, slashIndex))
-        val tag = TagEntity(name.substring(slashIndex + 1), parent)
+        val tag = Tag(name.substring(slashIndex + 1), parent)
         if (!DataDirectory.getTagDirectory(tag).mkdirs()) return null
         parent?.children?.add(tag)
         tags[name] = tag
@@ -89,7 +89,7 @@ class FileManager {
     // move files to tag
     // renameTag on children
     // delete tag from map
-    fun renameTag(tag: TagEntity, newName: String): Boolean {
+    fun renameTag(tag: Tag, newName: String): Boolean {
         val newTag = createTag(newName) ?: return false
         for (file in tag.files) {
             removeTags(file, tag)
@@ -103,7 +103,7 @@ class FileManager {
         return ok
     }
 
-    fun deleteTag(tag: TagEntity) {
+    fun deleteTag(tag: Tag) {
         tag.parent?.children?.remove(tag)
         tags.remove(tag.fullName())
         DataDirectory.getTagDirectory(tag).deleteRecursively()

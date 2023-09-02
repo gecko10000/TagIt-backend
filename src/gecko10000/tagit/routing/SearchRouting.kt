@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.misc.respondJson
-import gecko10000.tagit.model.SavedFileEntity
+import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.savedFiles
 import gecko10000.tagit.tags
 import io.ktor.http.*
@@ -17,7 +17,6 @@ import redempt.redlex.processing.CullStrategy
 import java.util.function.Predicate
 
 
-
 fun Route.searchRouting() {
     route("/search") {
         get("files") {
@@ -30,14 +29,21 @@ fun Route.searchRouting() {
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.searchTags() {
-    val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
-    val foundTags = tags.values.filter { it.fullName().contains(searchInput) }.sortedBy { it.fullName().length }.toList()
+    val searchInput = call.request.queryParameters["q"] ?: return call.respond(
+        HttpStatusCode.BadRequest,
+        "Search input not provided."
+    )
+    val foundTags =
+        tags.values.filter { it.fullName().contains(searchInput) }.sortedBy { it.fullName().length }.toList()
     call.respondJson(foundTags)
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.searchFiles() {
-    val searchInput = call.request.queryParameters["q"] ?: return call.respond(HttpStatusCode.BadRequest, "Search input not provided.")
-    if (searchInput.isEmpty()) return call.respondJson(listOf<SavedFileEntity>())
+    val searchInput = call.request.queryParameters["q"] ?: return call.respond(
+        HttpStatusCode.BadRequest,
+        "Search input not provided."
+    )
+    if (searchInput.isEmpty()) return call.respondJson(listOf<SavedFile>())
     val parsedSearch = parseSearchInput(call, searchInput) ?: return
     val foundFiles = savedFiles.values.filter { parsedSearch.test(it) }.toList()
     call.respondJson(foundFiles)
@@ -57,12 +63,12 @@ private val parser = Parser.create(
     },
     ParserComponent.mapChildren("query") {
         //if (it.size != 3) it[0]
-        var predicate = it[0] as Predicate<SavedFileEntity>
+        var predicate = it[0] as Predicate<SavedFile>
         lateinit var operator: BinaryOperator
         for (i in IntRange(1, it.size - 1)) {
             // query
             if (i % 2 == 0) {
-                predicate = operator.apply(predicate, it[i] as Predicate<SavedFileEntity>)
+                predicate = operator.apply(predicate, it[i] as Predicate<SavedFile>)
             } else operator = it[i] as BinaryOperator
         }
         predicate
@@ -74,22 +80,22 @@ private val parser = Parser.create(
     ParserComponent.mapString("file") { s ->
         // we get file:[ ]*<filename> so we have to remove the leading text
         val sub = s.substringAfter(':').trimStart()
-        Predicate<SavedFileEntity>{ it.file.name.contains(sub) }
+        Predicate<SavedFile> { it.file.name.contains(sub) }
     },
     ParserComponent.mapString("tag") { s ->
-        Predicate<SavedFileEntity>{ it.tags.any { t -> t.fullName().contains(s) }}
+        Predicate<SavedFile> { it.tags.any { t -> t.fullName().contains(s) } }
     },
     ParserComponent.mapChildren("not") {
-        Predicate.not(it[0] as Predicate<SavedFileEntity>)
+        Predicate.not(it[0] as Predicate<SavedFile>)
     },
     ParserComponent.mapString("word") { it },
 )
 
 private val errorRegex = Regex("column ([0-9]+)")
-private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<SavedFileEntity>? {
+private suspend fun parseSearchInput(call: ApplicationCall, input: String): Predicate<SavedFile>? {
     try {
         @Suppress("UNCHECKED_CAST")
-        return parser.parse(input) as Predicate<SavedFileEntity>
+        return parser.parse(input) as Predicate<SavedFile>
     } catch (ex: LexException) {
         val message = ex.message ?: return run {
             call.respond(HttpStatusCode.InternalServerError, "Parser error message was empty.")
@@ -100,7 +106,10 @@ private suspend fun parseSearchInput(call: ApplicationCall, input: String): Pred
             null
         }
         // string is 1-indexed so we need to subtract 1 from the index that errors
-        call.respondJson(mapOf("index" to index.toIntOrNull()?.dec().toString()), statusCode = HttpStatusCode.UnprocessableEntity)
+        call.respondJson(
+            mapOf("index" to index.toIntOrNull()?.dec().toString()),
+            statusCode = HttpStatusCode.UnprocessableEntity
+        )
     } catch (ex: Exception) {
         ex.printStackTrace()
         throw ex
@@ -112,5 +121,6 @@ enum class BinaryOperator {
     AND,
     OR,
     ;
+
     fun <T> apply(p1: Predicate<T>, p2: Predicate<T>): Predicate<T> = if (this == AND) p1.and(p2) else p1.or(p2)
 }
