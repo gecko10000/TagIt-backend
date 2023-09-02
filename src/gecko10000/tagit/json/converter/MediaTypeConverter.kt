@@ -18,6 +18,6 @@ class MediaTypeConverter : Converter<String, MediaType>() {
     }
 
     override fun doBackward(mediaType: MediaType): String {
-        TODO("Not yet implemented")
+        throw NotImplementedError()
     }
 }

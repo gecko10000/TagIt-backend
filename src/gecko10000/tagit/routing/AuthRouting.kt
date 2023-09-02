@@ -2,8 +2,8 @@ package gecko10000.tagit.routing
 
 import gecko10000.tagit.db
 import gecko10000.tagit.db.DBUser
+import gecko10000.tagit.misc.extensions.respondJson
 import gecko10000.tagit.misc.hash
-import gecko10000.tagit.misc.respondJson
 import gecko10000.tagit.misc.verify
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.OK

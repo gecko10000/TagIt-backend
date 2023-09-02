@@ -17,6 +17,6 @@ class TagConverter : Converter<Tag, JsonTag>() {
     }
 
     override fun doBackward(jsonTag: JsonTag): Tag {
-        TODO("Not yet implemented")
+        throw NotImplementedError()
     }
 }

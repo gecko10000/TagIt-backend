@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileManager
-import gecko10000.tagit.misc.respondJson
+import gecko10000.tagit.misc.extensions.respondJson
 import gecko10000.tagit.model.Tag
 import gecko10000.tagit.tags
 import io.ktor.http.*

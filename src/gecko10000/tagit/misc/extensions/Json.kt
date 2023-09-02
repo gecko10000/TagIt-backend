@@ -1,4 +1,4 @@
-package gecko10000.tagit.misc
+package gecko10000.tagit.misc.extensions
 
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.OK

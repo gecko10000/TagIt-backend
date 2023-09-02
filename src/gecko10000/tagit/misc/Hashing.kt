@@ -4,8 +4,8 @@ import de.mkammerer.argon2.Argon2
 import de.mkammerer.argon2.Argon2Factory
 import de.mkammerer.argon2.Argon2Helper
 
-const val memory = 65536
-const val parallelism = 1
+private const val memory = 65536
+private const val parallelism = 1
 
 private val argon: Argon2 = Argon2Factory.create()
 private val iterations = Argon2Helper.findIterations(argon, 1000, memory, parallelism)

@@ -26,6 +26,6 @@ class SavedFileConverter(private val mediaTypeConverter: MediaTypeConverter) : C
     }
 
     override fun doBackward(file: JsonSavedFile): SavedFile {
-        TODO("Not yet implemented")
+        throw NotImplementedError()
     }
 }
