@@ -25,7 +25,7 @@ open class FileController(
 
     // this only adds the tag to the maps, it does not modify the filesystem.
     // to create the symlink, use `addNewTag` below.
-    fun addTag(savedFile: SavedFile, tag: Tag) {
+    internal fun addTag(savedFile: SavedFile, tag: Tag) {
         files[savedFile.file.name] = savedFile.copy(tags = savedFile.tags.plus(tag))
         tags[tag.fullName()] = tag.copy(files = tag.files.plus(savedFile))
     }
