@@ -5,5 +5,5 @@ data class Tag(
     val parent: String?,
     val children: Set<String>,
     val files: Set<String>,
-    val totalFiles: Int,
+    val totalFileCount: Int,
 )

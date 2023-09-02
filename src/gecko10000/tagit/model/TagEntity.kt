@@ -9,6 +9,11 @@ data class TagEntity(
 
     fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
 
+    fun getAllFiles(): Set<SavedFileEntity> {
+        val childFiles = children.flatMap { it.getAllFiles() }
+        return setOf(*files.toTypedArray(), *childFiles.toTypedArray())
+    }
+
     override fun hashCode() = fullName().hashCode()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
