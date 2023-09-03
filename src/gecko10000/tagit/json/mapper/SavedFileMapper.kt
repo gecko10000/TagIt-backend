@@ -20,7 +20,7 @@ class SavedFileMapper(private val mediaTypeMapper: MediaTypeMapper) : Function<S
             file.length(),
             null,
             null,
-            savedFile.tags.map { it.fullName() }.toSet()
+            savedFile.tags
         )
     }
 }

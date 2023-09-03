@@ -20,6 +20,16 @@ private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
 }
 
 private fun Route.getTagRoute() {
+    get {
+        val roots =
+            tagController.readOnlyTagMap()
+                .filter { it.value.parent == null }
+                .values
+                .map { it.fullName() }
+                .toSet()
+        val dummyTag = Tag("", children = roots)
+        call.respondJson(Mapper.TAG.apply(dummyTag))
+    }
     get("{name}") {
         val tag = ensureTagExists(call) ?: return@get
         call.respondJson(Mapper.TAG.apply(tag))

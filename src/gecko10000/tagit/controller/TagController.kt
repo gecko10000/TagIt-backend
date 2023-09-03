@@ -13,10 +13,11 @@ class TagController(
     private val files: ConcurrentHashMap<String, SavedFile>,
     private val tags: ConcurrentHashMap<String, Tag>,
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+    private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
     fun createTag(name: String): Tag? {
         tags[name]?.let { return it }
+        log.info("Creating tag {}.", name)
         val slashIndex = name.indexOfLast { it == '/' }
         // create tags recursively
         val parent = if (slashIndex == -1) {
@@ -24,28 +25,31 @@ class TagController(
         } else {
             createTag(name.substring(0, slashIndex))
         }
-        val tag = Tag(name.substring(slashIndex + 1), parent)
+        val tag = Tag(name.substring(slashIndex + 1), parent?.fullName())
         val tagDirectory = dataDirectory.getTagDirectory(tag)
         if (!tagDirectory.mkdirs()) {
-            logger.error("Couldn't create directories for tag {}.", tag.fullName())
+            log.error("Couldn't create directories for tag {}.", tag.fullName())
             return null
         }
         if (!dataDirectory.getTagDirectory(tag).mkdirs()) return null
         if (parent != null) {
-            tags[parent.fullName()] = parent.copy(children = parent.children.plus(tag))
+            tags[parent.fullName()] = parent.copy(children = parent.children.plus(tag.fullName()))
         }
         tags[name] = tag
         return tag
     }
 
     fun renameTag(tag: Tag, newName: String): Boolean {
+        log.info("Renaming tag {} tag {}.", tag.fullName(), newName)
         val newTag = createTag(newName) ?: return false
-        for (file in tag.files) {
+        for (fileName in tag.files) {
+            val file = files[fileName] ?: continue
             fileController.removeTag(file, tag)
             fileController.addNewTag(file, newTag)
         }
-        val success = tag.children.fold(true) { acc, child ->
-            return acc and renameTag(child, "$newName/${child.name}")
+        val success = tag.children.fold(true) { acc, childName ->
+            val child = tags[childName] ?: return@fold false
+            return acc and renameTag(child, "$newName/${childName}")
         }
         deleteTag(tag)
         return success
@@ -60,16 +64,23 @@ class TagController(
     }
 
     fun deleteTag(tag: Tag) {
-        for (child in tag.children) {
+        log.info("Deleting tag {}.", tag.fullName())
+        // delete children tags
+        for (childName in tag.children) {
+            val child = tags[childName] ?: continue
             deleteTag(child)
         }
-        for (file in tag.files) {
+        // remove tag from files
+        for (fileName in tag.files) {
+            val file = files[fileName] ?: continue
             fileController.removeTag(file, tag)
         }
-        val parent = tag.parent
+        // remove self from parent tag
+        val parent = tags[tag.parent]
         if (parent != null) {
-            tags[parent.fullName()] = parent.copy(children = parent.children.minus(tag))
+            tags[parent.fullName()] = parent.copy(children = parent.children.minus(tag.fullName()))
         }
+        // kys
         tags.remove(tag.fullName())
     }
 
@@ -82,7 +93,8 @@ class TagController(
             file.delete()
             return
         }
-        fileController.addTag(savedFile, tag)
+        val latestTag = tags[tag.fullName()] ?: return
+        fileController.addTag(savedFile, latestTag)
     }
 
     private fun loadTagsRecursively(file: File, parent: Tag? = null) {
@@ -94,10 +106,12 @@ class TagController(
             return
         }
         // directory, must be a tag
-        val tag = Tag(file.name, parent)
+        val parentName = parent?.fullName()
+        val tag = Tag(file.name, parentName)
         tags[tag.fullName()] = tag
-        if (parent != null) {
-            tags[parent.fullName()] = parent.copy(children = parent.children.plus(tag))
+        if (parentName != null) {
+            val latestParent = tags[parentName] ?: return
+            tags[parentName] = latestParent.copy(children = latestParent.children.plus(tag.fullName()))
         }
         for (child in file.listFiles()!!) {
             loadTagsRecursively(child, tag)
@@ -110,6 +124,8 @@ class TagController(
         }
     }
 
+    // NOTE: DO NOT USE the tagController in any child functions
+    // possible TODO: move tag loading outside of init so we can use it?
     init {
         loadTags()
     }

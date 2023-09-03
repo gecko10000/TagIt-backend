@@ -1,6 +1,7 @@
 package gecko10000.tagit.search
 
 import gecko10000.tagit.model.SavedFile
+import gecko10000.tagit.tagController
 import redempt.redlex.bnf.BNFParser
 import redempt.redlex.parser.Parser
 import redempt.redlex.parser.ParserComponent
@@ -41,7 +42,7 @@ val parser = Parser.create(
         Predicate<SavedFile> { it.file.name.contains(sub) }
     },
     ParserComponent.mapString("tag") { s ->
-        Predicate<SavedFile> { it.tags.any { t -> t.fullName().contains(s) } }
+        Predicate<SavedFile> { it.tags.any { name -> tagController[name]?.fullName()?.contains(s) ?: false } }
     },
     ParserComponent.mapChildren("not") {
         Predicate.not(it[0] as Predicate<SavedFile>)

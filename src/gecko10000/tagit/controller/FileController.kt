@@ -3,6 +3,7 @@ package gecko10000.tagit.controller
 import gecko10000.tagit.dataDirectory
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
+import gecko10000.tagit.tagController
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -47,21 +48,25 @@ open class FileController(
     // update tags with new SavedFile
     // remove old SavedFile
     suspend fun renameFile(savedFile: SavedFile, newName: String, call: ApplicationCall? = null) {
+        log.info("Renaming file {} to {}.", savedFile.file.name, newName)
         val oldFile = savedFile.file
         val newFile = oldFile.parentFile.resolve(newName)
         if (newFile.exists()) return call?.respond(HttpStatusCode.BadRequest, "New filename already exists.") ?: Unit
         oldFile.renameTo(newFile)
         val newSavedFile = savedFile.copy(file = newFile)
         files[newName] = newSavedFile
-        for (tag in savedFile.tags) {
-            val newTag = tag.copy(files = tag.files.minus(savedFile).plus(newSavedFile))
+        for (tagName in savedFile.tags) {
+            val tag = tagController[tagName] ?: continue
+            val newTag = tag.copy(files = tag.files.minus(oldFile.name).plus(newFile.name))
             tags[tag.fullName()] = newTag
         }
         files.remove(oldFile.name)
     }
 
     fun deleteFile(savedFile: SavedFile) {
-        for (tag in savedFile.tags) {
+        log.info("Deleting file {}.", savedFile.file.name)
+        for (tagName in savedFile.tags) {
+            val tag = tagController[tagName] ?: continue
             removeTag(savedFile, tag)
         }
         savedFile.file.delete()
@@ -71,11 +76,12 @@ open class FileController(
     // this only adds the tag to the maps, it does not modify the filesystem.
     // to create the symlink, use `addNewTag` below.
     internal fun addTag(savedFile: SavedFile, tag: Tag) {
-        files[savedFile.file.name] = savedFile.copy(tags = savedFile.tags.plus(tag))
-        tags[tag.fullName()] = tag.copy(files = tag.files.plus(savedFile))
+        files[savedFile.file.name] = savedFile.copy(tags = savedFile.tags.plus(tag.fullName()))
+        tags[tag.fullName()] = tag.copy(files = tag.files.plus(savedFile.file.name))
     }
 
     fun addNewTag(savedFile: SavedFile, tag: Tag) {
+        log.info("Adding tag {} to {}.", tag.fullName(), savedFile.file.name)
         addTag(savedFile, tag)
         val tagDir = dataDirectory.getTagDirectory(tag)
         createLink(tagDir, savedFile.file)
@@ -91,15 +97,19 @@ open class FileController(
 
     fun removeTag(savedFile: SavedFile, tag: Tag) {
         val fileName = savedFile.file.name
-        files[fileName] = savedFile.copy(tags = savedFile.tags.minus(tag))
-        tags[tag.fullName()] = tag.copy(files = tag.files.minus(savedFile))
+        val tagName = tag.fullName()
+        log.info("Removing tag {} from {}.", tagName, fileName)
+        files[fileName] = savedFile.copy(tags = savedFile.tags.minus(tagName))
+        tags[tagName] = tag.copy(files = tag.files.minus(fileName))
         dataDirectory.getTagDirectory(tag).resolve(fileName).delete()
     }
 
     private fun loadFiles() {
-        for (file in dataDirectory.file.listFiles()!!) {
+        val fileList = dataDirectory.file.listFiles()!!
+        for (file in fileList) {
             files[file.name] = SavedFile(file)
         }
+        log.info("Loaded {} files.", fileList.size)
     }
 
     init {

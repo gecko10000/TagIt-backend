@@ -1,17 +1,27 @@
 package gecko10000.tagit.model
 
+import gecko10000.tagit.fileController
+import gecko10000.tagit.tagController
+
 data class Tag(
     val name: String,
-    val parent: Tag? = null,
-    val children: Set<Tag> = setOf(),
-    val files: Set<SavedFile> = setOf(),
+    val parent: String? = null,
+    val children: Set<String> = setOf(),
+    val files: Set<String> = setOf(),
 ) {
 
-    fun fullName(): String = if (parent == null) name else parent.fullName() + "/" + name
+    fun fullName(): String = parent?.let { "$it/$name" } ?: name
 
     fun getAllFiles(): Set<SavedFile> {
-        val childFiles = children.flatMap { it.getAllFiles() }
-        return setOf(*files.toTypedArray(), *childFiles.toTypedArray())
+        val childFiles = children.flatMap { tagController[it]?.getAllFiles() ?: setOf() }
+        val savedFiles = files.mapNotNull { fileController[it] }
+        return savedFiles.plus(childFiles).toSet()
+    }
+
+    fun getAllChildren(): Set<Tag> {
+        val indirectChildren = children.flatMap { tagController[it]?.getAllChildren() ?: setOf() }
+        val childTags = children.mapNotNull { tagController[it] }
+        return childTags.plus(indirectChildren).toSet()
     }
 
     override fun hashCode() = fullName().hashCode()

@@ -17,14 +17,6 @@ enum class Order(val comparator: Comparator<SavedFile>) {
     SIZE(compareBy { it.file.length() }),
 }
 
-private fun Route.topLevelTagsRoute() {
-    get {
-        val roots =
-            tagController.readOnlyTagMap().filter { it.value.parent == null }.values.map { Mapper.TAG.apply(it) }
-        call.respondJson(mapOf("tags" to roots))
-    }
-}
-
 private fun Route.allTagsRoute() {
     get("all") {
         val tags = tagController.readOnlyTagMap().values.map { Mapper.CHILD_TAG.apply(it) }
@@ -49,7 +41,6 @@ private fun Route.allFilesRoute() {
 
 fun Route.retrievalRouting() {
     route("/tags") {
-        topLevelTagsRoute()
         allTagsRoute()
     }
     route("/files") {

@@ -4,7 +4,7 @@ import java.io.File
 
 const val thumbnailSize = 200
 
-data class SavedFile(val file: File, val tags: Set<Tag> = setOf())
+data class SavedFile(val file: File, val tags: Set<String> = setOf())
 /*
 @Serializable
 data class OldSavedFile(
