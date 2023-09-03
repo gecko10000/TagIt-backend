@@ -8,7 +8,8 @@ class ChildTagMapper(private val tagCountsMapper: TagCountsMapper) : Function<Ta
     override fun apply(tag: Tag): JsonChildTag {
         return JsonChildTag(
             tag.name,
-            tagCountsMapper.apply(tag)
+            tag.parent,
+            tagCountsMapper.apply(tag),
         )
     }
 }

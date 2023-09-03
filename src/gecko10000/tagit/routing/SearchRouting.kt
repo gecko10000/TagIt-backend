@@ -1,8 +1,9 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileController
+import gecko10000.tagit.json.mapper.Mapper
+import gecko10000.tagit.json.`object`.JsonSavedFile
 import gecko10000.tagit.misc.extension.respondJson
-import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.search.SearchQueryPredicateMapper
 import gecko10000.tagit.tagController
 import io.ktor.http.*
@@ -48,7 +49,7 @@ private fun Route.searchFilesRoute() {
             HttpStatusCode.BadRequest,
             "Search input not provided."
         )
-        if (searchInput.isEmpty()) return@get call.respondJson(listOf<SavedFile>())
+        if (searchInput.isEmpty()) return@get call.respondJson(listOf<JsonSavedFile>())
         val parsedSearch = try {
             searchQueryPredicateMapper.apply(searchInput)
         } catch (ex: LexException) {
@@ -58,8 +59,8 @@ private fun Route.searchFilesRoute() {
             ex.printStackTrace()
             throw ex
         }
-        val foundFiles = fileController.readOnlyFileMap().values.filter { parsedSearch.test(it) }.toList()
-        call.respondJson(foundFiles)
+        val foundFiles = fileController.readOnlyFileMap().values.filter { parsedSearch.test(it) }
+        call.respondJson(foundFiles.map { Mapper.SAVED_FILE.apply(it) })
     }
 }
 

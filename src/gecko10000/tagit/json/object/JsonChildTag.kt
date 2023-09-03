@@ -9,5 +9,6 @@ be displayed in the file browser properly.
 @Serializable
 data class JsonChildTag(
     val name: String,
+    val parent: String?,
     val counts: JsonTagCounts,
 )
