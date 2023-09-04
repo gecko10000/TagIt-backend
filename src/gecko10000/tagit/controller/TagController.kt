@@ -45,7 +45,7 @@ class TagController(
         for (fileName in tag.files) {
             val file = files[fileName] ?: continue
             fileController.removeTag(file, tag)
-            fileController.addNewTag(file, newTag)
+            fileController.addTag(file, newTag)
         }
         val success = tag.children.fold(true) { acc, childName ->
             val child = tags[childName] ?: return@fold false
@@ -94,7 +94,7 @@ class TagController(
             return
         }
         val latestTag = tags[tag.fullName()] ?: return
-        fileController.addTag(savedFile, latestTag)
+        fileController.addTagInternal(savedFile, latestTag)
     }
 
     private fun loadTagsRecursively(file: File, parent: Tag? = null) {
