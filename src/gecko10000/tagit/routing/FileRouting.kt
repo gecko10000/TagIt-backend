@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileController
-import gecko10000.tagit.json.mapper.Mapper
+import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.tagController
@@ -31,7 +31,7 @@ private fun Route.getFileRoute() {
 private fun Route.getFileInfoRoute() {
     get("{name}/info") {
         val savedFile = ensureFileExists(call) ?: return@get
-        call.respondJson(Mapper.SAVED_FILE.apply(savedFile))
+        call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
     }
 }
 

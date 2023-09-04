@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileController
-import gecko10000.tagit.json.mapper.Mapper
+import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.json.`object`.JsonSavedFile
 import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.search.SearchQueryPredicateMapper
@@ -60,7 +60,7 @@ private fun Route.searchFilesRoute() {
             throw ex
         }
         val foundFiles = fileController.readOnlyFileMap().values.filter { parsedSearch.test(it) }
-        call.respondJson(foundFiles.map { Mapper.SAVED_FILE.apply(it) })
+        call.respondJson(foundFiles.map { JsonMapper.SAVED_FILE.apply(it) })
     }
 }
 

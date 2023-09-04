@@ -33,6 +33,7 @@ open class FileController(
             file.delete()
             call?.respond(HttpStatusCode.InternalServerError, ex)
         }
+        files[name] = SavedFile(file)
     }
 
     operator fun get(name: String?): SavedFile? {

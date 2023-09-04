@@ -1,6 +1,6 @@
-package gecko10000.tagit.json.mapper
+package gecko10000.tagit.model.mapper
 
-import gecko10000.tagit.json.enum.MediaType
+import gecko10000.tagit.model.enum.MediaType
 import java.util.function.Function
 
 class MediaTypeMapper : Function<String, MediaType> {

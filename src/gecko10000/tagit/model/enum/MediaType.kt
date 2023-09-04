@@ -1,4 +1,4 @@
-package gecko10000.tagit.json.enum
+package gecko10000.tagit.model.enum
 
 enum class MediaType {
     IMAGE,

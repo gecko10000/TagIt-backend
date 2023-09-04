@@ -1,6 +1,6 @@
 package gecko10000.tagit.routing
 
-import gecko10000.tagit.json.mapper.Mapper
+import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.model.Tag
 import gecko10000.tagit.tagController
@@ -28,11 +28,11 @@ private fun Route.getTagRoute() {
                 .map { it.fullName() }
                 .toSet()
         val dummyTag = Tag("", children = roots)
-        call.respondJson(Mapper.TAG.apply(dummyTag))
+        call.respondJson(JsonMapper.TAG.apply(dummyTag))
     }
     get("{name}") {
         val tag = ensureTagExists(call) ?: return@get
-        call.respondJson(Mapper.TAG.apply(tag))
+        call.respondJson(JsonMapper.TAG.apply(tag))
     }
 }
 

@@ -1,10 +1,16 @@
 package gecko10000.tagit.model
 
+import gecko10000.tagit.model.enum.MediaType
+import gecko10000.tagit.model.mapper.ModelMapper
 import java.io.File
+import java.nio.file.Files
 
-const val thumbnailSize = 200
-
-data class SavedFile(val file: File, val tags: Set<String> = setOf())
+data class SavedFile(val file: File, val tags: Set<String> = setOf()) {
+    val mimeType: String? = Files.probeContentType(file.toPath())
+    val mediaType = run {
+        mimeType?.let { ModelMapper.MEDIA_TYPE.apply(it) } ?: MediaType.UNKNOWN
+    }
+}
 /*
 @Serializable
 data class OldSavedFile(
@@ -83,8 +89,7 @@ data class Size(val width: Int, val height: Int) {
         }
 
         private fun getVideoSize(file: File): gecko10000.tagit.json.objects.Size? {
-            val stream = FFprobe().probe("$fileDirectory${file.name}").streams.ifEmpty { return null }[0]
-            return gecko10000.tagit.json.objects.Size(stream.width, stream.height)
+
         }
 
         fun get(file: File): gecko10000.tagit.json.objects.Size? {

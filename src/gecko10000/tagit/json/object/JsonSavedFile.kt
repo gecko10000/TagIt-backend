@@ -1,6 +1,6 @@
 package gecko10000.tagit.json.`object`
 
-import gecko10000.tagit.json.enum.MediaType
+import gecko10000.tagit.model.enum.MediaType
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,6 +10,6 @@ data class JsonSavedFile(
     val modificationDate: Long,
     val fileSize: Long,
     val thumbnail: String?,
-    val size: JsonSize?,
+    val dimensions: JsonDimensions?,
     val tags: Set<String>,
 )

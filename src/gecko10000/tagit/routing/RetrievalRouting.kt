@@ -1,7 +1,7 @@
 package gecko10000.tagit.routing
 
 import gecko10000.tagit.fileController
-import gecko10000.tagit.json.mapper.Mapper
+import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.tagController
@@ -19,7 +19,7 @@ enum class Order(val comparator: Comparator<SavedFile>) {
 
 private fun Route.allTagsRoute() {
     get("all") {
-        val tags = tagController.readOnlyTagMap().values.map { Mapper.CHILD_TAG.apply(it) }
+        val tags = tagController.readOnlyTagMap().values.map { JsonMapper.CHILD_TAG.apply(it) }
         call.respondJson(mapOf("tags" to tags))
     }
 }
@@ -35,7 +35,7 @@ private fun Route.allFilesRoute() {
         val reversed = headers["reversed"] == "true" // false if not provided or something other than "true"
         var sortedFiles = fileController.readOnlyFileMap().values.sortedWith(order.comparator)
         if (reversed) sortedFiles = sortedFiles.reversed()
-        call.respondJson(sortedFiles.map { Mapper.SAVED_FILE.apply(it) })
+        call.respondJson(sortedFiles.map { JsonMapper.SAVED_FILE.apply(it) })
     }
 }
 
