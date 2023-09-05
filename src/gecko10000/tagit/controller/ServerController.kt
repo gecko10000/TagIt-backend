@@ -10,6 +10,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.routing.*
 
 class ServerController {
@@ -34,6 +35,7 @@ class ServerController {
                 }
             }
             install(CallLogging)
+            install(PartialContent)
             routing {
                 authenticate("auth-bearer") {
                     retrievalRouting()
