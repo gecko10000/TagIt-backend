@@ -2,4 +2,5 @@ port: 10000
 data_directory: "data/"
 # This is only necessary if you're running the website version of the frontend.
 # A wildcard (*) can be specified at the start of the domain (e.g. "*.frontend.domain")
+# Alternatively, specify "*" if you want to allow any host.
 frontend_domain: "my.frontend.domain"

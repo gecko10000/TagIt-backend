@@ -1,5 +1,6 @@
 package gecko10000.tagit.routing
 
+import gecko10000.tagit.db
 import gecko10000.tagit.fileController
 import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
@@ -7,6 +8,7 @@ import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.tagController
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -20,8 +22,12 @@ private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     return existing
 }
 
+// note: this route is special because we cannot use headers for videos/audio in browser.
+// therefore, the token is provided as a query parameter.
 private fun Route.getFileRoute() {
     get("{name}") {
+        val token = call.request.queryParameters["token"]
+        token?.let { db.userFromToken(token) } ?: return@get call.respond(HttpStatusCode.Unauthorized)
         val savedFile = ensureFileExists(call) ?: return@get
         call.respondFile(savedFile.file)
     }
@@ -99,12 +105,14 @@ private fun Route.deleteFileRoute() {
 
 fun Route.fileRouting() {
     route("/file") {
+        authenticate("auth-bearer") {
+            getFileInfoRoute()
+            uploadFileRoute()
+            renameFileRoute()
+            addTagRoute()
+            removeTagRoute()
+            deleteFileRoute()
+        }
         getFileRoute()
-        getFileInfoRoute()
-        uploadFileRoute()
-        renameFileRoute()
-        addTagRoute()
-        removeTagRoute()
-        deleteFileRoute()
     }
 }

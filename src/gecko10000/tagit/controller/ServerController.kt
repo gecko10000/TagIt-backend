@@ -16,7 +16,11 @@ class ServerController {
     fun create(): ApplicationEngine {
         return embeddedServer(Netty, port = config.port) {
             install(CORS) {
-                allowHost(config.frontendDomain)
+                if (config.frontendDomain == "*") {
+                    anyHost()
+                } else {
+                    allowHost(config.frontendDomain)
+                }
                 allowHeaders { true }
                 allowMethod(HttpMethod.Patch)
                 allowMethod(HttpMethod.Delete)
@@ -32,12 +36,16 @@ class ServerController {
             install(CallLogging)
             routing {
                 authenticate("auth-bearer") {
-                    fileRouting()
-                    tagRouting()
                     retrievalRouting()
                     searchRouting()
+                    tagRouting()
                 }
+                // not authenticated for login (and registration)
                 authRouting()
+                // not authenticated for query param authentication
+                // for file retrieval
+                fileRouting()
+                // not authenticated for publicly available info
                 idRouting()
             }
         }
