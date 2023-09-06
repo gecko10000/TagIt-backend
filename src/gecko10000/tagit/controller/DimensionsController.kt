@@ -46,7 +46,7 @@ class DimensionsController {
             else -> null
         }
         dimensions?.let {
-            log.info("Determined dimensions for {}: {}", name, dimensions)
+            log.info("Determined dimensions for {}: {}x{}", name, dimensions.width, dimensions.height)
             dimensionsMap[name] = dimensions
         }
         //}
