@@ -1,5 +1,6 @@
 package gecko10000.tagit.controller
 
+import gecko10000.tagit.misc.SavedFileMap
 import gecko10000.tagit.model.Dimensions
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.enum.MediaType
@@ -10,9 +11,14 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import javax.imageio.stream.FileImageInputStream
 
-class DimensionsController {
+class DimensionsController(files: SavedFileMap) {
     private val log = LoggerFactory.getLogger(this::class.java)
     private val dimensionsMap = ConcurrentHashMap<String, Dimensions>()
+
+    init {
+        files.addRemoveListener { removeSavedFile(it) }
+        files.addPutListener { determineSize(it) }
+    }
 
     private fun getImageDimensions(savedFile: SavedFile): Dimensions? {
         val readers = ImageIO.getImageReadersByMIMEType(savedFile.mimeType!!)

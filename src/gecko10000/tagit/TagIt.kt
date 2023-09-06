@@ -9,12 +9,16 @@ import java.util.concurrent.ConcurrentHashMap
 
 val config = Config()
 val dataDirectory = DataDirectory()
-val dimensionsController = DimensionsController()
 
 // we make these private so they can't be modified externally
 // as that would risk a break in the structure
-private val files = SavedFileMap(dimensionsController)
+private val files = SavedFileMap()
 private val tags = ConcurrentHashMap<String, Tag>()
+
+// note: dimension order should be instantiated first as it adds
+// listeners to the file map. loading files before adding the listeners
+// will cause issues.
+val dimensionsController = DimensionsController(files)
 val fileController = FileController(files, tags)
 val tagController = TagController(files, tags)
 val db = DatabaseController()
