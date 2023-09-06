@@ -1,10 +1,10 @@
 package gecko10000.tagit.controller
 
+import gecko10000.tagit.ffprobe
 import gecko10000.tagit.misc.SavedFileMap
 import gecko10000.tagit.model.Dimensions
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.enum.MediaType
-import net.bramp.ffmpeg.FFprobe
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -16,8 +16,8 @@ class DimensionsController(files: SavedFileMap) {
     private val dimensionsMap = ConcurrentHashMap<String, Dimensions>()
 
     init {
-        files.addRemoveListener { removeSavedFile(it) }
         files.addPutListener { determineSize(it) }
+        files.addRemoveListener { removeSavedFile(it) }
     }
 
     private fun getImageDimensions(savedFile: SavedFile): Dimensions? {
@@ -39,11 +39,11 @@ class DimensionsController(files: SavedFileMap) {
     }
 
     private fun getVideoDimensions(savedFile: SavedFile): Dimensions? {
-        val stream = FFprobe().probe(savedFile.file.path).streams.ifEmpty { return null }[0]
+        val stream = ffprobe.probe(savedFile.file.path).streams.ifEmpty { return null }[0]
         return Dimensions(stream.width, stream.height)
     }
 
-    fun determineSize(savedFile: SavedFile) {
+    private fun determineSize(savedFile: SavedFile) {
         val name = savedFile.file.name
         if (dimensionsMap.containsKey(name)) return
         val dimensions = when (savedFile.mediaType) {
@@ -52,15 +52,15 @@ class DimensionsController(files: SavedFileMap) {
             else -> null
         }
         dimensions?.let {
-            log.info("Determined dimensions for {}: {}x{}", name, dimensions.width, dimensions.height)
+            // loaded every startup, no need to log repeatedly
+            // log.info("Determined dimensions for {}: {}x{}", name, dimensions.width, dimensions.height)
             dimensionsMap[name] = dimensions
         }
-        //}
     }
 
     fun getDimensions(savedFile: SavedFile) = dimensionsMap[savedFile.file.name]
 
-    fun removeSavedFile(savedFile: SavedFile) {
+    private fun removeSavedFile(savedFile: SavedFile) {
         dimensionsMap.remove(savedFile.file.name)
     }
 }

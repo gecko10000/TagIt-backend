@@ -6,6 +6,7 @@ import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.tagController
+import gecko10000.tagit.thumbnailController
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -38,6 +39,14 @@ private fun Route.getFileInfoRoute() {
     get("{name}/info") {
         val savedFile = ensureFileExists(call) ?: return@get
         call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
+    }
+}
+
+private fun Route.getFileThumbnailRoute() {
+    get("{name}/thumb") {
+        val savedFile = ensureFileExists(call) ?: return@get
+        thumbnailController.getThumbnail(savedFile)?.let { call.respondFile(it) }
+            ?: call.respond(HttpStatusCode.NotFound)
     }
 }
 
@@ -107,6 +116,7 @@ fun Route.fileRouting() {
     route("/file") {
         authenticate("auth-bearer") {
             getFileInfoRoute()
+            getFileThumbnailRoute()
             uploadFileRoute()
             renameFileRoute()
             addTagRoute()

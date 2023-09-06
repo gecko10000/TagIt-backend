@@ -72,6 +72,7 @@ dependencies {
     implementation("de.mkammerer:argon2-jvm:2.11")
     implementation("net.bramp.ffmpeg:ffmpeg:0.7.0")
     implementation("org.yaml:snakeyaml:2.2")
+    implementation("net.coobird:thumbnailator:0.4.20")
 }
 
 kotlin {

@@ -9,7 +9,7 @@ data class JsonSavedFile(
     val mediaType: MediaType,
     val modificationDate: Long,
     val fileSize: Long,
-    val thumbnail: String?,
+    val thumbnail: Boolean,
     val dimensions: JsonDimensions?,
     val tags: Set<String>,
 )

@@ -3,6 +3,7 @@ package gecko10000.tagit.json.mapper
 import gecko10000.tagit.controller.DimensionsController
 import gecko10000.tagit.json.`object`.JsonSavedFile
 import gecko10000.tagit.model.SavedFile
+import gecko10000.tagit.thumbnailController
 import java.util.function.Function
 
 class SavedFileMapper(
@@ -18,7 +19,7 @@ class SavedFileMapper(
             savedFile.mediaType,
             file.lastModified(),
             file.length(),
-            null,
+            thumbnailController.getThumbnail(savedFile) != null,
             dimensionsController.getDimensions(savedFile)?.let { dimensionsMapper.apply(it) },
             savedFile.tags
         )
