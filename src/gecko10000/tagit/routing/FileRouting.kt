@@ -36,7 +36,6 @@ private fun Route.getFileRoute() {
 private fun Route.getFileInfoRoute() {
     get("{name}/info") {
         val savedFile = ensureFileExists(call) ?: return@get
-        println(savedFile.tags.size)
         call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
     }
 }
