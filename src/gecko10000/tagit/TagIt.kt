@@ -5,6 +5,7 @@ import gecko10000.tagit.misc.Config
 import gecko10000.tagit.misc.DataDirectory
 import gecko10000.tagit.misc.SavedFileMap
 import gecko10000.tagit.model.Tag
+import kotlinx.coroutines.sync.Mutex
 import net.bramp.ffmpeg.FFmpeg
 import net.bramp.ffmpeg.FFprobe
 import java.util.concurrent.ConcurrentHashMap
@@ -13,6 +14,7 @@ val config = Config()
 val dataDirectory = DataDirectory()
 val ffprobe = FFprobe()
 val ffmpeg = FFmpeg()
+val mutex = Mutex()
 
 // we make these private so they can't be modified externally
 // as that would risk a break in the structure

@@ -3,10 +3,12 @@ package gecko10000.tagit.controller
 import gecko10000.tagit.dataDirectory
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
+import gecko10000.tagit.mutex
 import gecko10000.tagit.tagController
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -16,7 +18,7 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 
-open class FileController(
+class FileController(
     private val files: ConcurrentHashMap<String, SavedFile>,
     private val tags: ConcurrentHashMap<String, Tag>,
 ) {
@@ -33,7 +35,9 @@ open class FileController(
             file.delete()
             call?.respond(HttpStatusCode.InternalServerError, ex)
         }
-        files[name] = SavedFile(file)
+        mutex.withLock {
+            files[name] = SavedFile(file)
+        }
     }
 
     operator fun get(name: String?): SavedFile? {

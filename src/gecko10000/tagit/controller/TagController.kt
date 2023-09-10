@@ -4,6 +4,7 @@ import gecko10000.tagit.dataDirectory
 import gecko10000.tagit.fileController
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
+import kotlinx.coroutines.sync.Mutex
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -14,6 +15,8 @@ class TagController(
     private val tags: ConcurrentHashMap<String, Tag>,
 ) {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
+
+    val mutex = Mutex()
 
     fun createTag(name: String): Tag? {
         tags[name]?.let { return it }
