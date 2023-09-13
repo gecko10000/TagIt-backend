@@ -33,9 +33,18 @@ private fun Route.getFileRoute() {
 }
 
 
-private fun Route.getFileInfoRoute() {
+private fun Route.getFileInfoByNameRoute() {
     get("{name}/info") {
         val savedFile = ensureFileExists(call) ?: return@get
+        call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
+    }
+}
+
+private fun Route.getFileInfoByIdRoute() {
+    get("by_id/{id}/info") {
+        val id = call.parameters["id"]
+        val savedFile = fileController.readOnlyFileMap().values.find { it.uuid.toString() == id }
+        savedFile ?: return@get call.respond(HttpStatusCode.NotFound)
         call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
     }
 }
@@ -121,7 +130,8 @@ private fun Route.deleteFileRoute() {
 fun Route.fileRouting() {
     route("/file") {
         authenticate("auth-bearer") {
-            getFileInfoRoute()
+            getFileInfoByNameRoute()
+            getFileInfoByIdRoute()
             getFileThumbnailRoute()
             uploadFileRoute()
             renameFileRoute()
