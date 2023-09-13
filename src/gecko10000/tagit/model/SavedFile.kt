@@ -4,8 +4,10 @@ import gecko10000.tagit.model.enum.MediaType
 import gecko10000.tagit.model.mapper.ModelMapper
 import java.io.File
 import java.nio.file.Files
+import java.util.*
 
 data class SavedFile(val file: File, val tags: Set<String> = setOf()) {
+    val uuid = UUID.randomUUID()
     val mimeType: String? = Files.probeContentType(file.toPath())
     val mediaType = run {
         mimeType?.let { ModelMapper.MEDIA_TYPE.apply(it) } ?: MediaType.UNKNOWN

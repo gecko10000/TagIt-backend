@@ -15,6 +15,7 @@ class SavedFileMapper(
         // probeContentType is better than using LocalFileContent
         // because LFC just looks at the extension
         return JsonSavedFile(
+            savedFile.uuid,
             file.name,
             savedFile.mediaType,
             file.lastModified(),
