@@ -63,7 +63,8 @@ class FileController(
         for (tagName in savedFile.tags) {
             val tag = tagController[tagName] ?: continue
             removeTag(savedFile, tag)
-            addTag(newSavedFile, tag)
+            val modifiedTag = tagController[tagName] ?: continue
+            addTag(newSavedFile, modifiedTag)
         }
         files.remove(oldFile.name)
     }
