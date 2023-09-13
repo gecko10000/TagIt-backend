@@ -62,8 +62,8 @@ class FileController(
         files[newName] = newSavedFile
         for (tagName in savedFile.tags) {
             val tag = tagController[tagName] ?: continue
-            val newTag = tag.copy(files = tag.files.minus(oldFile.name).plus(newFile.name))
-            tags[tag.fullName()] = newTag
+            removeTag(savedFile, tag)
+            addTag(newSavedFile, tag)
         }
         files.remove(oldFile.name)
     }
