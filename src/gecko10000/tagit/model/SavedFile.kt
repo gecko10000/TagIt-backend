@@ -6,8 +6,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.*
 
-data class SavedFile(val file: File, val tags: Set<String> = setOf()) {
-    val uuid = UUID.randomUUID()
+data class SavedFile(val file: File, val tags: Set<String> = setOf(), val uuid: UUID = UUID.randomUUID()) {
     val mimeType: String? = Files.probeContentType(file.toPath())
     val mediaType = run {
         mimeType?.let { ModelMapper.MEDIA_TYPE.apply(it) } ?: MediaType.UNKNOWN

@@ -8,7 +8,7 @@ import java.util.*
 @Serializable
 data class JsonSavedFile(
     @Serializable(with = UUIDSerializer::class)
-    val id: UUID,
+    val uuid: UUID,
     val name: String,
     val mediaType: MediaType,
     val modificationDate: Long,
