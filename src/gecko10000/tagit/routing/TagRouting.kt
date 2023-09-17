@@ -40,7 +40,7 @@ private fun Route.getTagRoute() {
         val dummyTag = Tag(name = "", children = roots)
         call.respondJson(JsonMapper.TAG.apply(dummyTag))
     }
-    get("{name}") {
+    get("{uuid}") {
         val tag = ensureTagExists(call) ?: return@get
         call.respondJson(JsonMapper.TAG.apply(tag))
     }

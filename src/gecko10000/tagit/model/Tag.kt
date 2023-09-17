@@ -12,7 +12,7 @@ data class Tag(
     val files: Set<UUID> = setOf(),
 ) {
 
-    fun fullName(): String = parent?.let { "$it/$name" } ?: name
+    fun fullName(): String = parent?.let { tagController[it] }?.let { "${it.fullName()}/$name" } ?: name
 
     fun getAllFiles(): Set<SavedFile> {
         val childFiles = children.flatMap { tagController[it]?.getAllFiles() ?: setOf() }
