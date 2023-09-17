@@ -2,12 +2,14 @@ package gecko10000.tagit.model
 
 import gecko10000.tagit.fileController
 import gecko10000.tagit.tagController
+import java.util.*
 
 data class Tag(
     val name: String,
     val parent: String? = null,
     val children: Set<String> = setOf(),
     val files: Set<String> = setOf(),
+    val uuid: UUID = UUID.randomUUID(),
 ) {
 
     fun fullName(): String = parent?.let { "$it/$name" } ?: name

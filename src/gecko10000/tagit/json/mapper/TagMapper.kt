@@ -13,6 +13,7 @@ class TagMapper(
 
     override fun apply(tag: Tag): JsonTag {
         return JsonTag(
+            tag.uuid,
             tag.name,
             tag.parent,
             tag.children.mapNotNull { tagController[it] }
