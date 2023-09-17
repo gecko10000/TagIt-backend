@@ -16,6 +16,7 @@ class TagMapper(
             tag.uuid,
             tag.name,
             tag.parent,
+            tagController[tag.parent]?.fullName(),
             tag.children.mapNotNull { tagController[it] }
                 .map { childTagMapper.apply(it) }
                 .toSortedSet(compareBy { it.name }),

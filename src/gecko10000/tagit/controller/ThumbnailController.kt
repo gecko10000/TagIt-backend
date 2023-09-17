@@ -10,6 +10,7 @@ import net.coobird.thumbnailator.Thumbnails
 import net.coobird.thumbnailator.geometry.Positions
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 const val thumbnailSize = 200
@@ -17,7 +18,7 @@ const val thumbnailFormat = "png"
 
 class ThumbnailController(files: SavedFileMap) {
     private val log = LoggerFactory.getLogger(this::class.java)
-    private val thumbnailMap = ConcurrentHashMap<String, File>()
+    private val thumbnailMap = ConcurrentHashMap<UUID, File>()
 
     private fun checkForExistingThumb(savedFile: SavedFile): File? {
         val thumb = getOutputFile(savedFile)
@@ -66,11 +67,11 @@ class ThumbnailController(files: SavedFileMap) {
     }
 
     private fun makeThumbnail(savedFile: SavedFile) {
-        val name = savedFile.file.name
-        if (thumbnailMap.containsKey(name)) return
+        val uuid = savedFile.uuid
+        if (thumbnailMap.containsKey(uuid)) return
         val existing = checkForExistingThumb(savedFile)
         existing?.let {
-            thumbnailMap[name] = existing
+            thumbnailMap[uuid] = existing
             return
         }
         val thumbnail = when (savedFile.mediaType) {
@@ -79,15 +80,15 @@ class ThumbnailController(files: SavedFileMap) {
             else -> null
         }
         thumbnail?.let {
-            log.info("Generated new thumbnail for {}.", name)
-            thumbnailMap[name] = thumbnail
+            log.info("Generated new thumbnail for {}.", uuid)
+            thumbnailMap[uuid] = thumbnail
         }
     }
 
-    fun getThumbnail(savedFile: SavedFile) = thumbnailMap[savedFile.file.name]
+    fun getThumbnail(savedFile: SavedFile) = thumbnailMap[savedFile.uuid]
 
     private fun removeSavedFile(savedFile: SavedFile) {
-        val thumb = thumbnailMap.remove(savedFile.file.name)
+        val thumb = thumbnailMap.remove(savedFile.uuid)
         thumb?.delete()
     }
 

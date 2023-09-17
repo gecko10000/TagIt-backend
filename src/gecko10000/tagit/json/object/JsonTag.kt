@@ -9,7 +9,9 @@ data class JsonTag(
     @Serializable(with = UUIDSerializer::class)
     val uuid: UUID,
     val name: String,
-    val parent: String?,
+    @Serializable(with = UUIDSerializer::class)
+    val parentUUID: UUID?,
+    val parentName: String?,
     val children: Set<JsonChildTag>,
     val files: Set<JsonSavedFile>,
     val totalFileCount: Int,

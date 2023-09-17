@@ -13,6 +13,8 @@ data class JsonChildTag(
     @Serializable(with = UUIDSerializer::class)
     val uuid: UUID,
     val name: String,
-    val parent: String?,
+    @Serializable(with = UUIDSerializer::class)
+    val parentUUID: UUID?,
+    val parentName: String?,
     val counts: JsonTagCounts,
 )

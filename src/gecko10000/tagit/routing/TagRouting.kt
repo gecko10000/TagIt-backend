@@ -2,6 +2,7 @@ package gecko10000.tagit.routing
 
 import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
+import gecko10000.tagit.misc.extension.uuidFromStringSafe
 import gecko10000.tagit.model.Tag
 import gecko10000.tagit.mutex
 import gecko10000.tagit.tagController
@@ -12,11 +13,18 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.sync.withLock
 
-private fun getTagName(call: ApplicationCall) = call.parameters["name"]?.trimEnd('/')
+private fun getTagName(call: ApplicationCall) = call.parameters["uuid"]?.trimEnd('/')
 
 private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
-    val name = getTagName(call)
-    val existing = tagController[name]
+    val uuidString = call.parameters["uuid"] ?: run {
+        call.respond(HttpStatusCode.BadRequest, "No tag UUID sent.")
+        return null
+    }
+    val uuid = uuidFromStringSafe(uuidString) ?: run {
+        call.respond(HttpStatusCode.BadRequest, "Invalid UUID sent.")
+        return null
+    }
+    val existing = tagController[uuid]
     existing ?: call.respond(HttpStatusCode.NotFound, "Tag not found.")
     return existing
 }
@@ -27,9 +35,9 @@ private fun Route.getTagRoute() {
             tagController.readOnlyTagMap()
                 .filter { it.value.parent == null }
                 .values
-                .map { it.fullName() }
+                .map { it.uuid }
                 .toSet()
-        val dummyTag = Tag("", children = roots)
+        val dummyTag = Tag(name = "", children = roots)
         call.respondJson(JsonMapper.TAG.apply(dummyTag))
     }
     get("{name}") {
@@ -42,7 +50,8 @@ private fun Route.createTagRoute() {
     post("{name}") {
         val name = getTagName(call)!!
         mutex.withLock {
-            tagController[name]?.run { return@post call.respond(HttpStatusCode.BadRequest, "Tag already exists.") }
+            val existing = tagController.readOnlyTagMap().values.firstOrNull { it.fullName() == name }
+            existing?.run { return@post call.respond(HttpStatusCode.BadRequest, "Tag already exists.") }
             tagController.createTag(name) ?: return@post call.respond(
                 HttpStatusCode.InternalServerError,
                 "Could not create tag."
@@ -53,8 +62,7 @@ private fun Route.createTagRoute() {
 }
 
 private fun Route.renameTagRoute() {
-
-    patch("{name}") {
+    patch("{uuid}") {
         mutex.withLock {
             val tag = ensureTagExists(call) ?: return@patch
             val params = call.receiveParameters()
@@ -73,14 +81,14 @@ private fun Route.renameTagRoute() {
                 return@patch call.respond(HttpStatusCode.BadRequest, "Can't move a tag to one of its children!")
             }
             if (!tagController.renameTag(tag, newName))
-                return@patch call.respond(HttpStatusCode.InternalServerError, "Invalid new name.")
+                return@patch call.respond(HttpStatusCode.InternalServerError, "Could not rename tag.")
         }
         call.respond(HttpStatusCode.OK)
     }
 }
 
 private fun Route.deleteTagRoute() {
-    delete("{name}") {
+    delete("{uuid}") {
         mutex.withLock {
             val tag = ensureTagExists(call) ?: return@delete
             tagController.deleteTag(tag)

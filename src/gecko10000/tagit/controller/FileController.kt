@@ -15,75 +15,78 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Files
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 
 class FileController(
-    private val files: ConcurrentHashMap<String, SavedFile>,
-    private val tags: ConcurrentHashMap<String, Tag>,
+    private val files: ConcurrentHashMap<UUID, SavedFile>,
+    private val tags: ConcurrentHashMap<UUID, Tag>,
 ) {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
-    suspend fun addFile(inputStream: InputStream, name: String, call: ApplicationCall? = null) {
+    suspend fun addFile(inputStream: InputStream, name: String, call: ApplicationCall? = null): SavedFile? {
         val file = dataDirectory.file.resolve(name)
+        val outputStream = file.outputStream()
         try {
-            val outputStream = file.outputStream()
             inputStream.transferTo(outputStream)
-            outputStream.close()
         } catch (ex: IOException) {
             log.error("Could not save file {}.", name)
             file.delete()
             call?.respond(HttpStatusCode.InternalServerError, ex)
+            return null
+        } finally {
+            outputStream.close()
         }
+        val savedFile = SavedFile(file = file)
         mutex.withLock {
-            files[name] = SavedFile(file)
+            files[savedFile.uuid] = savedFile
         }
+        return savedFile
     }
 
-    operator fun get(name: String?): SavedFile? {
-        return files[name]
+    operator fun get(uuid: UUID?): SavedFile? {
+        uuid ?: return null
+        return files[uuid]
     }
 
-    fun readOnlyFileMap(): Map<String, SavedFile> {
+    fun readOnlyFileMap(): Map<UUID, SavedFile> {
         return files.toMap()
     }
 
-    // mv old new
-    // add new SavedFile
-    // update tags with new SavedFile
-    // remove old SavedFile
+    // changes the name for the existing savedFile
     suspend fun renameFile(savedFile: SavedFile, newName: String, call: ApplicationCall? = null) {
-        log.info("Renaming file {} to {}.", savedFile.file.name, newName)
         val oldFile = savedFile.file
         val newFile = oldFile.parentFile.resolve(newName)
         if (newFile.exists()) return call?.respond(HttpStatusCode.BadRequest, "New filename already exists.") ?: Unit
+
+        log.info("Renaming file {} to {}.", savedFile.file.name, newName)
         oldFile.renameTo(newFile)
         val newSavedFile = savedFile.copy(file = newFile)
-        files[newName] = newSavedFile
-        for (tagName in savedFile.tags) {
-            val tag = tagController[tagName] ?: continue
-            removeTag(savedFile, tag)
-            val modifiedTag = tagController[tagName] ?: continue
-            addTag(newSavedFile, modifiedTag)
+        files[savedFile.uuid] = newSavedFile
+        for (tagId in savedFile.tags) {
+            val tag = tags[tagId] ?: continue
+            dataDirectory.getTagDirectory(tag).resolve(oldFile.name).renameTo(newFile)
         }
-        files.remove(oldFile.name)
     }
 
     fun deleteFile(savedFile: SavedFile) {
         log.info("Deleting file {}.", savedFile.file.name)
-        for (tagName in savedFile.tags) {
-            val tag = tagController[tagName] ?: continue
+        for (tagId in savedFile.tags) {
+            val tag = tagController[tagId] ?: continue
             removeTag(savedFile, tag)
         }
         savedFile.file.delete()
-        files.remove(savedFile.file.name)
+        files.remove(savedFile.uuid)
     }
 
     // this only adds the tag to the maps, it does not modify the filesystem.
     // to create the symlink, use `addNewTag` below.
     fun addTagInternal(savedFile: SavedFile, tag: Tag) {
-        files[savedFile.file.name] = savedFile.copy(tags = savedFile.tags.plus(tag.fullName()))
-        tags[tag.fullName()] = tag.copy(files = tag.files.plus(savedFile.file.name))
+        val fileId = savedFile.uuid
+        val tagId = tag.uuid
+        files[fileId] = savedFile.copy(tags = savedFile.tags.plus(tagId))
+        tags[tagId] = tag.copy(files = tag.files.plus(fileId))
     }
 
     fun addTag(savedFile: SavedFile, tag: Tag) {
@@ -102,18 +105,20 @@ class FileController(
     }
 
     fun removeTag(savedFile: SavedFile, tag: Tag) {
+        val fileId = savedFile.uuid
+        val tagId = tag.uuid
         val fileName = savedFile.file.name
-        val tagName = tag.fullName()
-        log.info("Removing tag {} from {}.", tagName, fileName)
-        files[fileName] = savedFile.copy(tags = savedFile.tags.minus(tagName))
-        tags[tagName] = tag.copy(files = tag.files.minus(fileName))
+        log.info("Removing tag {} from {}.", tag.fullName(), fileName)
+        files[fileId] = savedFile.copy(tags = savedFile.tags.minus(tagId))
+        tags[tagId] = tag.copy(files = tag.files.minus(fileId))
         dataDirectory.getTagDirectory(tag).resolve(fileName).delete()
     }
 
     private fun loadFiles() {
         val fileList = dataDirectory.file.listFiles()!!
         for (file in fileList) {
-            files[file.name] = SavedFile(file)
+            val savedFile = SavedFile(file = file)
+            files[savedFile.uuid] = savedFile
         }
         log.info("Loaded {} files.", fileList.size)
     }

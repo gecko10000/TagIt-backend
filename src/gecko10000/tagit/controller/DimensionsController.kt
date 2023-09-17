@@ -7,13 +7,14 @@ import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.enum.MediaType
 import org.slf4j.LoggerFactory
 import java.io.IOException
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import javax.imageio.stream.FileImageInputStream
 
 class DimensionsController(files: SavedFileMap) {
     private val log = LoggerFactory.getLogger(this::class.java)
-    private val dimensionsMap = ConcurrentHashMap<String, Dimensions>()
+    private val dimensionsMap = ConcurrentHashMap<UUID, Dimensions>()
 
     init {
         files.addPutListener { determineSize(it) }
@@ -44,8 +45,8 @@ class DimensionsController(files: SavedFileMap) {
     }
 
     private fun determineSize(savedFile: SavedFile) {
-        val name = savedFile.file.name
-        if (dimensionsMap.containsKey(name)) return
+        val uuid = savedFile.uuid
+        if (dimensionsMap.containsKey(uuid)) return
         val dimensions = when (savedFile.mediaType) {
             MediaType.IMAGE -> getImageDimensions(savedFile)
             MediaType.VIDEO -> getVideoDimensions(savedFile)
@@ -54,13 +55,13 @@ class DimensionsController(files: SavedFileMap) {
         dimensions?.let {
             // loaded every startup, no need to log repeatedly
             // log.info("Determined dimensions for {}: {}x{}", name, dimensions.width, dimensions.height)
-            dimensionsMap[name] = dimensions
+            dimensionsMap[uuid] = dimensions
         }
     }
 
-    fun getDimensions(savedFile: SavedFile) = dimensionsMap[savedFile.file.name]
+    fun getDimensions(savedFile: SavedFile) = dimensionsMap[savedFile.uuid]
 
     private fun removeSavedFile(savedFile: SavedFile) {
-        dimensionsMap.remove(savedFile.file.name)
+        dimensionsMap.remove(savedFile.uuid)
     }
 }

@@ -15,5 +15,5 @@ data class JsonSavedFile(
     val fileSize: Long,
     val thumbnail: Boolean,
     val dimensions: JsonDimensions?,
-    val tags: Set<String>,
+    val tags: Set<@Serializable(with = UUIDSerializer::class) UUID>,
 )

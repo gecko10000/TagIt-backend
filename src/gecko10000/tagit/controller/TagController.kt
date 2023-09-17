@@ -8,18 +8,21 @@ import kotlinx.coroutines.sync.Mutex
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class TagController(
-    private val files: ConcurrentHashMap<String, SavedFile>,
-    private val tags: ConcurrentHashMap<String, Tag>,
+    private val files: ConcurrentHashMap<UUID, SavedFile>,
+    private val tags: ConcurrentHashMap<UUID, Tag>,
 ) {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
     val mutex = Mutex()
 
     fun createTag(name: String): Tag? {
-        tags[name]?.let { return it }
+        val existing = tags.values.firstOrNull { it.fullName() != name }
+        existing?.run { return existing }
+
         log.info("Creating tag {}.", name)
         val slashIndex = name.indexOfLast { it == '/' }
         // create tags recursively
@@ -28,7 +31,7 @@ class TagController(
         } else {
             createTag(name.substring(0, slashIndex))
         }
-        val tag = Tag(name.substring(slashIndex + 1), parent?.fullName())
+        val tag = Tag(name = name.substring(slashIndex + 1), parent = parent?.uuid)
         val tagDirectory = dataDirectory.getTagDirectory(tag)
         if (!tagDirectory.mkdirs()) {
             log.error("Couldn't create directories for tag {}.", tag.fullName())
@@ -36,9 +39,9 @@ class TagController(
         }
         if (!dataDirectory.getTagDirectory(tag).mkdirs()) return null
         if (parent != null) {
-            tags[parent.fullName()] = parent.copy(children = parent.children.plus(tag.fullName()))
+            tags[parent.uuid] = parent.copy(children = parent.children.plus(tag.uuid))
         }
-        tags[name] = tag
+        tags[tag.uuid] = tag
         return tag
     }
 
@@ -58,11 +61,12 @@ class TagController(
         return success
     }
 
-    operator fun get(fullName: String?): Tag? {
-        return tags[fullName]
+    operator fun get(uuid: UUID?): Tag? {
+        uuid ?: return null
+        return tags[uuid]
     }
 
-    fun readOnlyTagMap(): Map<String, Tag> {
+    fun readOnlyTagMap(): Map<UUID, Tag> {
         return tags.toMap()
     }
 
@@ -74,47 +78,47 @@ class TagController(
             deleteTag(child)
         }
         // remove tag from files
-        for (fileName in tag.files) {
-            val file = files[fileName] ?: continue
+        for (fileId in tag.files) {
+            val file = files[fileId] ?: continue
             fileController.removeTag(file, tag)
         }
         // remove self from parent tag
         val parent = tags[tag.parent]
         if (parent != null) {
-            tags[parent.fullName()] = parent.copy(children = parent.children.minus(tag.fullName()))
+            tags[parent.uuid] = parent.copy(children = parent.children.minus(tag.uuid))
         }
         // kys
-        tags.remove(tag.fullName())
+        tags.remove(tag.uuid)
     }
 
     private fun loadFileTag(file: File, tag: Tag) {
         val name = file.name
-        val savedFile = files[name]
+        val savedFile = files.values.firstOrNull { it.file.name == name }
         // if the file is in the tags but not
         // found in saved files, we clean it up
         savedFile ?: run {
             file.delete()
             return
         }
-        val latestTag = tags[tag.fullName()] ?: return
+        // TODO: change controller functions to retrieve latest values locally.
+        val latestTag = tags[tag.uuid] ?: return
         fileController.addTagInternal(savedFile, latestTag)
     }
 
     private fun loadTagsRecursively(file: File, parent: Tag? = null) {
         if (!file.isDirectory) {
             // we have a file at the top level, ignore it
-            // e.g. tags/hello.txt
+            // e.g. data/tags/hello.txt
             if (parent == null) return
             loadFileTag(file, parent)
             return
         }
         // directory, must be a tag
-        val parentName = parent?.fullName()
-        val tag = Tag(file.name, parentName)
-        tags[tag.fullName()] = tag
-        if (parentName != null) {
-            val latestParent = tags[parentName] ?: return
-            tags[parentName] = latestParent.copy(children = latestParent.children.plus(tag.fullName()))
+        val tag = Tag(name = file.name, parent = parent?.uuid)
+        tags[tag.uuid] = tag
+        if (parent != null) {
+            val latestParent = tags[parent.uuid] ?: return
+            tags[parent.uuid] = latestParent.copy(children = latestParent.children.plus(tag.uuid))
         }
         for (child in file.listFiles()!!) {
             loadTagsRecursively(child, tag)
