@@ -59,7 +59,7 @@ private fun Route.uploadFileRoute() {
         val name = call.parameters["name"]!!
         if (name.contains('/')) return@post call.respond(HttpStatusCode.BadRequest, "Slashes not allowed in filename.")
         val existing = fileController.readOnlyFileMap().values.firstOrNull { it.file.name == name }
-        existing?.run { return@post call.respond(HttpStatusCode.BadRequest, "File already exists.") }
+        existing?.run { return@post call.respond(HttpStatusCode.Forbidden, "File already exists.") }
         val stream = call.receiveStream()
         withContext(Dispatchers.IO) {
             val savedFile = fileController.addFile(stream, name, call)
