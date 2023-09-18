@@ -137,6 +137,14 @@ private fun Route.deleteFileRoute() {
     }
 }
 
+private fun Route.checkFileExists() {
+    get("exists/{name}") {
+        val fileName = call.parameters["name"]
+        val exists = fileController.readOnlyFileMap().values.any { it.file.name == fileName }
+        call.respondJson(mapOf("exists" to exists))
+    }
+}
+
 fun Route.fileRouting() {
     route("/file") {
         authenticate("auth-bearer") {
@@ -147,6 +155,7 @@ fun Route.fileRouting() {
             addTagRoute()
             removeTagRoute()
             deleteFileRoute()
+            checkFileExists()
         }
         getFileRoute()
     }
