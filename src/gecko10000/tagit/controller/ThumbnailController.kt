@@ -74,10 +74,15 @@ class ThumbnailController(files: SavedFileMap) {
             thumbnailMap[uuid] = existing
             return
         }
-        val thumbnail = when (savedFile.mediaType) {
-            MediaType.IMAGE -> makeImageThumb(savedFile)
-            MediaType.VIDEO -> makeVideoThumb(savedFile)
-            else -> null
+        val thumbnail = try {
+            when (savedFile.mediaType) {
+                MediaType.IMAGE -> makeImageThumb(savedFile)
+                MediaType.VIDEO -> makeVideoThumb(savedFile)
+                else -> null
+            }
+        } catch (ex: Exception) {
+            log.error("Could not generate thumbnail for {}: {}.", savedFile.file.name, ex.message)
+            null
         }
         thumbnail?.let {
             log.info("Generated new thumbnail for {}.", uuid)
