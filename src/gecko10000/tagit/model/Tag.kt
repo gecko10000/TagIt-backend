@@ -1,16 +1,18 @@
 package gecko10000.tagit.model
 
+import gecko10000.tagit.dataDirectory
 import gecko10000.tagit.fileController
+import gecko10000.tagit.misc.extension.getUUID
 import gecko10000.tagit.tagController
 import java.util.*
 
 data class Tag(
-    val uuid: UUID = UUID.randomUUID(),
     val name: String,
     val parent: UUID? = null,
     val children: Set<UUID> = setOf(),
     val files: Set<UUID> = setOf(),
 ) {
+    val uuid: UUID = dataDirectory.getTagDirectory(this).getUUID()
 
     fun fullName(): String = parent?.let { tagController[it] }?.let { "${it.fullName()}/$name" } ?: name
 

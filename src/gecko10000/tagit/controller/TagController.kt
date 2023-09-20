@@ -125,15 +125,9 @@ class TagController(
         }
     }
 
-    private fun loadTags() {
+    fun loadTags() {
         for (tagDir in dataDirectory.tag.listFiles()!!) {
             loadTagsRecursively(tagDir)
         }
-    }
-
-    // NOTE: DO NOT USE the tagController in any child functions
-    // possible TODO: move tag loading outside of init so we can use it?
-    init {
-        loadTags()
     }
 }

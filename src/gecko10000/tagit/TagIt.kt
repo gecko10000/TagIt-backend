@@ -33,5 +33,9 @@ val db = DatabaseController()
 val server = ServerController()
 
 fun main() {
+    // note: this is not in the initializer
+    // because we need to access the TagController
+    // during tag loading.
+    tagController.loadTags()
     server.create().start(wait = true)
 }
