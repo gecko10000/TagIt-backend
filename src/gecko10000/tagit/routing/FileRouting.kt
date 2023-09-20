@@ -15,6 +15,11 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+
+val log: Logger = LoggerFactory.getLogger("FileRouting")
 
 private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     val uuid = uuidFromStringSafe(call.parameters["uuid"])
@@ -59,15 +64,21 @@ private fun Route.uploadFileRoute() {
         val name = call.parameters["name"]!!
         if (name.contains('/')) return@post call.respond(HttpStatusCode.BadRequest, "Slashes not allowed in filename.")
         val existing = fileController.readOnlyFileMap().values.firstOrNull { it.file.name == name }
+        val expectedSize = call.request.contentLength() ?: return@post call.respond(
+            HttpStatusCode.BadRequest, "Content-Length not specified."
+        )
         existing?.run { return@post call.respond(HttpStatusCode.Forbidden, "File already exists.") }
-        val stream = call.receiveStream()
+        val channel = call.receiveChannel()
         withContext(Dispatchers.IO) {
-            val savedFile = fileController.addFile(stream, name, call)
-            stream.close()
-            if (savedFile == null) {
-                return@withContext call.respond(HttpStatusCode.InternalServerError, "Could not save file.")
+            val savedFile = try {
+                fileController.addFile(channel, expectedSize, name, call)
+            } catch (ex: IOException) {
+                call.respond(HttpStatusCode.InternalServerError, ex.message ?: "")
+                null
             }
-            call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
+            savedFile?.let {
+                call.respondJson(JsonMapper.SAVED_FILE.apply(it))
+            }
         }
     }
 }

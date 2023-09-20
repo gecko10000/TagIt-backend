@@ -8,12 +8,13 @@ import gecko10000.tagit.tagController
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
+import io.ktor.util.cio.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -25,18 +26,30 @@ class FileController(
 ) {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
-    suspend fun addFile(inputStream: InputStream, name: String, call: ApplicationCall? = null): SavedFile? {
+    suspend fun addFile(
+        inputChannel: ByteReadChannel,
+        expectedSize: Long,
+        name: String,
+        call: ApplicationCall? = null
+    ): SavedFile {
         val file = dataDirectory.file.resolve(name)
-        val outputStream = file.outputStream()
+        val outputChannel = file.writeChannel()
         try {
-            inputStream.transferTo(outputStream)
+            inputChannel.copyAndClose(outputChannel)
         } catch (ex: IOException) {
             log.error("Could not save file {}.", name)
             file.delete()
-            call?.respond(HttpStatusCode.InternalServerError, ex)
-            return null
-        } finally {
-            outputStream.close()
+            throw ex
+        }
+        if (inputChannel.totalBytesRead != expectedSize) {
+            log.error(
+                "File upload for {} terminated early ({} instead of {} bytes).",
+                name,
+                inputChannel.totalBytesRead,
+                expectedSize
+            )
+            file.delete()
+            throw IOException("File upload terminated early.")
         }
         val savedFile = SavedFile(file = file)
         mutex.withLock {

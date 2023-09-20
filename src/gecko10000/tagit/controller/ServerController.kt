@@ -12,17 +12,18 @@ import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.routing.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ServerController {
+    private val log: Logger = LoggerFactory.getLogger(this::class.java)
     fun create(): ApplicationEngine {
         return embeddedServer(Netty, port = config.port) {
             install(CORS) {
-                if (config.frontendDomain == "*") {
-                    anyHost()
-                } else {
-                    allowHost(config.frontendDomain)
-                }
+                allowHost(config.frontendDomain)
+                allowNonSimpleContentTypes = true // for application/octet-stream
                 allowHeaders { true }
+                allowMethod(HttpMethod.Options)
                 allowMethod(HttpMethod.Patch)
                 allowMethod(HttpMethod.Delete)
             }
