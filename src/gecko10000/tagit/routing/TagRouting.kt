@@ -13,7 +13,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.sync.withLock
 
-private fun getTagName(call: ApplicationCall) = call.parameters["uuid"]?.trimEnd('/')
+private fun getTagName(call: ApplicationCall) = call.parameters["name"]?.trimEnd('/')
 
 private suspend fun ensureTagExists(call: ApplicationCall): Tag? {
     val uuidString = call.parameters["uuid"] ?: run {
