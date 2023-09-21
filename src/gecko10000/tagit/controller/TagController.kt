@@ -37,7 +37,6 @@ class TagController(
             log.error("Couldn't create directories for tag {}.", tag.fullName())
             return null
         }
-        if (!dataDirectory.getTagDirectory(tag).mkdirs()) return null
         if (parent != null) {
             tags[parent.uuid] = parent.copy(children = parent.children.plus(tag.uuid))
         }
