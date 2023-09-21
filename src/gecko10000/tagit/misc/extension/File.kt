@@ -7,5 +7,5 @@ import java.util.*
 fun File.getUUID(): UUID {
     val attributes = PathUtils.readBasicFileAttributes(this.toPath())
     val fileKeyString = attributes.fileKey().toString()
-            return UUID.nameUUIDFromBytes(fileKeyString.toByteArray())
+    return UUID.nameUUIDFromBytes(fileKeyString.toByteArray())
 }
