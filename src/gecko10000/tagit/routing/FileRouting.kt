@@ -39,6 +39,10 @@ private fun Route.getFileRoute() {
         val token = call.request.queryParameters["token"]
         token?.let { db.userFromToken(token) } ?: return@get call.respond(HttpStatusCode.Unauthorized)
         val savedFile = ensureFileExists(call) ?: return@get
+        call.response.header(HttpHeaders.ContentDisposition,
+            ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, savedFile.file.name)
+                .toString()
+        )
         call.respondFile(savedFile.file)
     }
 }
