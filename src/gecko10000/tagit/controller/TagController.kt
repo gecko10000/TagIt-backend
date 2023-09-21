@@ -4,7 +4,6 @@ import gecko10000.tagit.dataDirectory
 import gecko10000.tagit.fileController
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
-import kotlinx.coroutines.sync.Mutex
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -17,10 +16,8 @@ class TagController(
 ) {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
 
-    val mutex = Mutex()
-
-    fun createTag(name: String): Tag? {
-        val existing = tags.values.firstOrNull { it.fullName() != name }
+    fun createTag(name: String): Tag {
+        val existing = tags.values.firstOrNull { it.fullName() == name }
         existing?.run { return existing }
 
         log.info("Creating tag {}.", name)
@@ -32,11 +29,6 @@ class TagController(
             createTag(name.substring(0, slashIndex))
         }
         val tag = Tag(name = name.substring(slashIndex + 1), parent = parent?.uuid)
-        val tagDirectory = dataDirectory.getTagDirectory(tag)
-        if (!tagDirectory.mkdirs()) {
-            log.error("Couldn't create directories for tag {}.", tag.fullName())
-            return null
-        }
         if (parent != null) {
             tags[parent.uuid] = parent.copy(children = parent.children.plus(tag.uuid))
         }
@@ -46,7 +38,8 @@ class TagController(
 
     fun renameTag(tag: Tag, newName: String): Boolean {
         log.info("Renaming tag {} tag {}.", tag.fullName(), newName)
-        val newTag = createTag(newName) ?: return false
+        // TODO: make this use the same directory to maintain UUID.
+        val newTag = createTag(newName)
         for (fileName in tag.files) {
             val file = files[fileName] ?: continue
             fileController.removeTag(file, tag)

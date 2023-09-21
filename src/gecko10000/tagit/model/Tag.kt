@@ -12,7 +12,11 @@ data class Tag(
     val children: Set<UUID> = setOf(),
     val files: Set<UUID> = setOf(),
 ) {
-    val uuid: UUID = dataDirectory.getTagDirectory(this).getUUID()
+    val uuid: UUID = run {
+        val dir = dataDirectory.getTagDirectory(this)
+        dir.mkdirs()
+        dir.getUUID()
+    }
 
     fun fullName(): String = parent?.let { tagController[it] }?.let { "${it.fullName()}/$name" } ?: name
 
