@@ -52,10 +52,7 @@ private fun Route.createTagRoute() {
         mutex.withLock {
             val existing = tagController.readOnlyTagMap().values.firstOrNull { it.fullName() == name }
             existing?.run { return@post call.respond(HttpStatusCode.BadRequest, "Tag already exists.") }
-            tagController.createTag(name) ?: return@post call.respond(
-                HttpStatusCode.InternalServerError,
-                "Could not create tag."
-            )
+            tagController.createTag(name)
         }
         call.respond(HttpStatusCode.OK)
     }
