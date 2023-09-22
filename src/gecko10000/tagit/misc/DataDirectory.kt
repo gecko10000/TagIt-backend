@@ -5,7 +5,7 @@ import gecko10000.tagit.model.Tag
 import java.io.File
 
 class DataDirectory {
-    val base = File(config.dataDirectory)
+    val base = config.dataDirectory
 
     val file = base.resolve("files")
     val tag = base.resolve("tags")

@@ -10,7 +10,21 @@ class Config {
     private val yaml = Yaml(LoaderOptions())
     private val defaultConfig: Map<String, Any>
     private val config: Map<String, Any>
-    val dataDirectory: String
+    private val configDirectory: File = run {
+        fun getConfigDir(): File {
+            val environmentVariable = System.getenv("TAGIT_DATA_PATH")?.ifEmpty { null }
+            environmentVariable?.let { return File(environmentVariable) }
+            val userHome: String? = System.getProperty("user.home")
+            userHome?.let { return File(userHome).resolve(".tagit") }
+            return File("data")
+        }
+
+        val dir = getConfigDir()
+        dir.mkdirs()
+        dir
+    }
+
+    val dataDirectory: File
     val port: Int
     val frontendDomain: String
 
@@ -24,8 +38,7 @@ class Config {
     }
 
     private fun setupConfig(): Map<String, Any> {
-        val configPath = System.getenv("TAGIT_CONFIG_PATH")?.ifEmpty { null } ?: "config.yml"
-        val configFile = File(configPath)
+        val configFile = configDirectory.resolve("config.yml")
         if (!configFile.exists()) {
             saveDefaultConfig(configFile)
         }
@@ -40,7 +53,7 @@ class Config {
         config = setupConfig()
         defaultConfig = yaml.load(defaultConfigStream())
         port = getOrDefault("port")
-        dataDirectory = getOrDefault("data_directory")
+        dataDirectory = configDirectory.resolve(getOrDefault<String>("data_directory"))
         frontendDomain = getOrDefault("frontend_domain")
     }
 }

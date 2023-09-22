@@ -1,4 +1,14 @@
 port: 10000
+# Note: this is relative to the directory of this file.
+# You should have a layout like this:
+# ~/.tagit/      <-- can be changed with env variable TAGIT_DATA_PATH
+# - config.yml
+# - data/
+#   - files/
+#   - tags/
+#   - thumbs/
+#
+# etc.
 data_directory: "data/"
 # This is only necessary if you're running the website version of the frontend.
 # A wildcard (*) can be specified at the start of the domain (e.g. "*.frontend.domain")

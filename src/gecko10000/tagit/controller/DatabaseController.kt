@@ -5,7 +5,7 @@ import gecko10000.tagit.db.DBUser
 import gecko10000.tagit.db.SQLHelper
 
 class DatabaseController {
-    private val sql: SQLHelper = SQLHelper(SQLHelper.openSQLite(dataDirectory.base.resolve("database.db").toPath()))
+    private val sql: SQLHelper = SQLHelper(SQLHelper.openSQLite(dataDirectory.base.resolve("users.db").toPath()))
 
     init {
         createTables()
