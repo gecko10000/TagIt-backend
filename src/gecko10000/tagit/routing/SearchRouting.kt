@@ -11,6 +11,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import redempt.redlex.exception.LexException
+import kotlin.math.min
 
 private val searchQueryPredicateMapper = SearchQueryPredicateMapper()
 
@@ -29,7 +30,7 @@ private fun Route.simpleTagSearchRoute() {
 
 private val errorRegex = Regex("column ([0-9]+)")
 
-private suspend fun handleLexException(call: ApplicationCall, ex: LexException) {
+private suspend fun handleLexException(call: ApplicationCall, input: String, ex: LexException) {
     val message = ex.message ?: return run {
         call.respond(HttpStatusCode.InternalServerError, "Parser error message was empty.")
     }
@@ -37,8 +38,9 @@ private suspend fun handleLexException(call: ApplicationCall, ex: LexException) 
         call.respond(HttpStatusCode.InternalServerError, "Error regex matcher failed.")
     }
     // string is 1-indexed so we need to subtract 1 from the index that errors
+    val normalizedIndex = index.toIntOrNull()?.let { min(it, input.length) }?.dec()
     call.respondJson(
-        mapOf("index" to index.toIntOrNull()?.dec().toString()),
+        mapOf("index" to normalizedIndex.toString()),
         statusCode = HttpStatusCode.UnprocessableEntity
     )
 }
@@ -53,7 +55,7 @@ private fun Route.searchFilesRoute() {
         val parsedSearch = try {
             searchQueryPredicateMapper.apply(searchInput)
         } catch (ex: LexException) {
-            handleLexException(call, ex)
+            handleLexException(call, searchInput, ex)
             return@get
         } catch (ex: Exception) {
             ex.printStackTrace()
