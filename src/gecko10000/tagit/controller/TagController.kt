@@ -75,7 +75,7 @@ class TagController(
             fileController.removeTag(file, tag)
         }
         // remove self from parent tag
-        val parent = tags[tag.parent]
+        val parent = tag.parent?.let { tags[it] }
         if (parent != null) {
             tags[parent.uuid] = parent.copy(children = parent.children.minus(tag.uuid))
         }
