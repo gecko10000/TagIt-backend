@@ -46,7 +46,7 @@ class ServerController {
                 // not authenticated for login (and registration)
                 authRouting()
                 // not authenticated for query param authentication
-                // for file retrieval
+                // for file retrieval on web
                 fileRouting()
                 // not authenticated for publicly available info
                 idRouting()

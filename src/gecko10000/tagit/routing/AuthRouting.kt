@@ -54,6 +54,17 @@ private fun Route.loginRoute() {
     }
 }
 
+// This endpoint serves as a simple way
+// to check if the token is still valid
+private fun Route.validTokenRoute() {
+    get("token") {
+        val params = call.receiveParameters()
+        val token = params["token"] ?: return@get call.respond(BadRequest, "No token provided.")
+        val validUser = db.userFromToken(token) != null
+        call.respondJson(mapOf("valid" to validUser))
+    }
+}
+
 fun Route.authRouting() {
     route("/auth") {
         // only existing users can create new accounts
@@ -62,6 +73,6 @@ fun Route.authRouting() {
             registerRoute()
         }
         loginRoute()
-
+        validTokenRoute()
     }
 }
