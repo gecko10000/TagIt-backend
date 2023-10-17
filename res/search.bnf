@@ -4,6 +4,6 @@ sep ::= [ \t\r\n]+
 file ::= "file:" sep? word
 tag ::= word
 not ::= ("!" | "not:") sep? term
-word ::= [^ &|()!]+
+word ::= "\"" ([^\"] | "\\\"")+ "\"" | [^ &|()!]+
 term ::= file | tag | not | "(" query ")"
 query ::= sep? term (operator term)* sep?

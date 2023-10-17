@@ -19,7 +19,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
 
-val log: Logger = LoggerFactory.getLogger("FileRouting")
+private val log: Logger = LoggerFactory.getLogger("FileRouting")
 
 private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     val uuid = uuidFromStringSafe(call.parameters["uuid"])
@@ -39,7 +39,8 @@ private fun Route.getFileRoute() {
         val token = call.request.queryParameters["token"]
         token?.let { db.userFromToken(token) } ?: return@get call.respond(HttpStatusCode.Unauthorized)
         val savedFile = ensureFileExists(call) ?: return@get
-        call.response.header(HttpHeaders.ContentDisposition,
+        call.response.header(
+            HttpHeaders.ContentDisposition,
             ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, savedFile.file.name)
                 .toString()
         )
