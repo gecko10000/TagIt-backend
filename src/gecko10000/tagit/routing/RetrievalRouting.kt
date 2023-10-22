@@ -12,9 +12,11 @@ import io.ktor.server.routing.*
 import java.util.*
 
 enum class Order(val comparator: Comparator<SavedFile>) {
-    ALPHABETICAL(compareBy { it.file.name }),
-    DATE_MODIFIED(compareBy { it.file.lastModified() }),
-    SIZE(compareBy { it.file.length() }),
+    FILE_NAME(compareBy { it.file.name }),
+    MODIFICATION_DATE(compareBy { it.file.lastModified() }),
+    FILE_SIZE(compareBy { it.file.length() }),
+    NUM_TAGS(compareBy { it.tags.size }),
+    FILE_TYPE(compareBy { it.file.extension })
 }
 
 private fun Route.allTagsRoute() {
@@ -28,7 +30,7 @@ private fun Route.allFilesRoute() {
     get("all") {
         val headers = call.request.headers
         val order = try {
-            headers["order"]?.uppercase(Locale.getDefault())?.let { Order.valueOf(it) } ?: Order.DATE_MODIFIED
+            headers["order"]?.uppercase(Locale.getDefault())?.let { Order.valueOf(it) } ?: Order.MODIFICATION_DATE
         } catch (ex: IllegalArgumentException) {
             return@get call.respond(HttpStatusCode.NotImplemented, "Ordering not found.")
         }
