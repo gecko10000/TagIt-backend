@@ -40,8 +40,10 @@ class DimensionsController(files: SavedFileMap) {
     }
 
     private fun getVideoDimensions(savedFile: SavedFile): Dimensions? {
-        val stream = ffprobe.probe(savedFile.file.path).streams.ifEmpty { return null }[0]
-        return Dimensions(stream.width, stream.height)
+        val streams = ffprobe.probe(savedFile.file.path).streams.ifEmpty { return null }
+        val width = streams.maxOf { it.width }
+        val height = streams.maxOf { it.height }
+        return Dimensions(width, height)
     }
 
     private fun determineSize(savedFile: SavedFile) {
