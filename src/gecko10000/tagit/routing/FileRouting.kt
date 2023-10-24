@@ -85,9 +85,9 @@ private fun Route.uploadFileRoute() {
                 call.respond(HttpStatusCode.InternalServerError, ex.message ?: "")
                 return@withContext
             }
-            val modificationDate = call.parameters["modificationDate"]?.toLong()
-            modificationDate?.let { savedFile.file.setLastModified(it) }
             val headers = call.request.headers
+            val modificationDate = headers["modificationDate"]?.toLong()
+            modificationDate?.let { savedFile.file.setLastModified(it) }
             call.respondJson(JsonMapper.SAVED_FILE(savedFile, TagOrder.get(headers), headers.tagsReversed()))
         }
     }
