@@ -83,12 +83,12 @@ private fun Route.uploadFileRoute() {
             } catch (ex: IOException) {
                 log.info("Could not upload file: ${ex.stackTraceToString()}")
                 call.respond(HttpStatusCode.InternalServerError, ex.message ?: "")
-                null
+                return@withContext
             }
-            savedFile?.let {
-                val headers = call.request.headers
-                call.respondJson(JsonMapper.SAVED_FILE(it, TagOrder.get(headers), headers.tagsReversed()))
-            }
+            val modificationDate = call.parameters["modificationDate"]?.toLong()
+            modificationDate?.let { savedFile.file.setLastModified(it) }
+            val headers = call.request.headers
+            call.respondJson(JsonMapper.SAVED_FILE(savedFile, TagOrder.get(headers), headers.tagsReversed()))
         }
     }
 }
