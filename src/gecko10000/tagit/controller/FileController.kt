@@ -29,10 +29,10 @@ class FileController(
     suspend fun addFile(
         inputChannel: ByteReadChannel,
         expectedSize: Long,
-        name: String,
-        call: ApplicationCall? = null
+        name: String
     ): SavedFile {
         val file = dataDirectory.file.resolve(name)
+        file.createNewFile()
         val outputChannel = file.writeChannel()
         try {
             inputChannel.copyAndClose(outputChannel)

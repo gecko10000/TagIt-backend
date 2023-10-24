@@ -79,8 +79,9 @@ private fun Route.uploadFileRoute() {
         val channel = call.receiveChannel()
         withContext(Dispatchers.IO) {
             val savedFile = try {
-                fileController.addFile(channel, expectedSize, name, call)
+                fileController.addFile(channel, expectedSize, name)
             } catch (ex: IOException) {
+                log.info("Could not upload file: ${ex.stackTraceToString()}")
                 call.respond(HttpStatusCode.InternalServerError, ex.message ?: "")
                 null
             }
