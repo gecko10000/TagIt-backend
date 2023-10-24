@@ -4,6 +4,10 @@ import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.misc.extension.uuidFromStringSafe
 import gecko10000.tagit.model.Tag
+import gecko10000.tagit.model.enum.FileOrder
+import gecko10000.tagit.model.enum.TagOrder
+import gecko10000.tagit.model.enum.filesReversed
+import gecko10000.tagit.model.enum.tagsReversed
 import gecko10000.tagit.mutex
 import gecko10000.tagit.tagController
 import io.ktor.http.*
@@ -37,12 +41,21 @@ private fun Route.getTagRoute() {
                 .values
                 .map { it.uuid }
                 .toSet()
+        val headers = call.request.headers
+        val tagOrder = TagOrder.get(headers)
+        val tagsReversed = headers.tagsReversed()
         val dummyTag = Tag(name = "", children = roots)
-        call.respondJson(JsonMapper.TAG.apply(dummyTag))
+        // no files so order/reverse doesn't matter
+        call.respondJson(JsonMapper.TAG(dummyTag, tagOrder, tagsReversed, FileOrder.MODIFICATION_DATE, false))
     }
     get("{uuid}") {
         val tag = ensureTagExists(call) ?: return@get
-        call.respondJson(JsonMapper.TAG.apply(tag))
+        val headers = call.request.headers
+        val tagOrder = TagOrder.get(headers)
+        val tagsReversed = headers.tagsReversed()
+        val fileOrder = FileOrder.get(headers)
+        val filesReversed = headers.filesReversed()
+        call.respondJson(JsonMapper.TAG(tag, tagOrder, tagsReversed, fileOrder, filesReversed))
     }
 }
 

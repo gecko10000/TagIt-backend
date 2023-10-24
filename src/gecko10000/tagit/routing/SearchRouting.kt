@@ -4,6 +4,8 @@ import gecko10000.tagit.fileController
 import gecko10000.tagit.json.mapper.JsonMapper
 import gecko10000.tagit.json.`object`.JsonSavedFile
 import gecko10000.tagit.misc.extension.respondJson
+import gecko10000.tagit.model.enum.TagOrder
+import gecko10000.tagit.model.enum.tagsReversed
 import gecko10000.tagit.search.SearchQueryPredicateMapper
 import gecko10000.tagit.tagController
 import io.ktor.http.*
@@ -62,7 +64,8 @@ private fun Route.searchFilesRoute() {
             throw ex
         }
         val foundFiles = fileController.readOnlyFileMap().values.filter { parsedSearch.test(it) }
-        call.respondJson(foundFiles.map { JsonMapper.SAVED_FILE.apply(it) })
+        val headers = call.request.headers
+        call.respondJson(foundFiles.map { JsonMapper.SAVED_FILE(it, TagOrder.get(headers), headers.tagsReversed()) })
     }
 }
 
@@ -72,5 +75,3 @@ fun Route.searchRouting() {
         simpleTagSearchRoute()
     }
 }
-
-

@@ -15,5 +15,5 @@ data class JsonSavedFile(
     val fileSize: Long,
     val thumbnail: Boolean,
     val dimensions: JsonDimensions?,
-    val tags: Set<JsonChildTag>,
+    val tags: Collection<JsonChildTag>,
 )

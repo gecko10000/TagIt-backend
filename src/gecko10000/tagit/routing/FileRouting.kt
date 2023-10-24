@@ -6,6 +6,8 @@ import gecko10000.tagit.misc.extension.respondJson
 import gecko10000.tagit.misc.extension.uuidFromStringSafe
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
+import gecko10000.tagit.model.enum.TagOrder
+import gecko10000.tagit.model.enum.tagsReversed
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -52,7 +54,8 @@ private fun Route.getFileRoute() {
 private fun Route.getFileInfoRoute() {
     get("{uuid}/info") {
         val savedFile = ensureFileExists(call) ?: return@get
-        call.respondJson(JsonMapper.SAVED_FILE.apply(savedFile))
+        val headers = call.request.headers
+        call.respondJson(JsonMapper.SAVED_FILE(savedFile, TagOrder.get(headers), headers.tagsReversed()))
     }
 }
 
@@ -82,7 +85,8 @@ private fun Route.uploadFileRoute() {
                 null
             }
             savedFile?.let {
-                call.respondJson(JsonMapper.SAVED_FILE.apply(it))
+                val headers = call.request.headers
+                call.respondJson(JsonMapper.SAVED_FILE(it, TagOrder.get(headers), headers.tagsReversed()))
             }
         }
     }

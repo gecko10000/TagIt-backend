@@ -12,6 +12,9 @@ data class SavedFile(
     val tags: Set<UUID> = setOf(),
 ) {
     val uuid: UUID = file.getUUID()
+
+    // probeContentType is better than using LocalFileContent
+    // because LFC just looks at the extension
     val mimeType: String? = Files.probeContentType(file.toPath())
     val mediaType = run {
         mimeType?.let { ModelMapper.MEDIA_TYPE.apply(it) } ?: MediaType.UNKNOWN
