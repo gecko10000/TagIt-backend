@@ -46,6 +46,12 @@ private fun Route.getFileRoute() {
             ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, savedFile.file.name)
                 .toString()
         )
+        savedFile.mimeType?.let {
+            call.response.header(
+                HttpHeaders.ContentType,
+                it
+            )
+        }
         call.respondFile(savedFile.file)
     }
 }
