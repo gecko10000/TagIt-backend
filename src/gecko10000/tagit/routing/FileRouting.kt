@@ -8,6 +8,7 @@ import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
 import gecko10000.tagit.model.enum.TagOrder
 import gecko10000.tagit.model.enum.tagsReversed
+import io.ktor.client.content.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -46,13 +47,13 @@ private fun Route.getFileRoute() {
             ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, savedFile.file.name)
                 .toString()
         )
-        savedFile.mimeType?.let {
-            call.response.header(
-                HttpHeaders.ContentType,
-                it
-            )
-        }
-        call.respondFile(savedFile.file)
+        // We don't use respondFile because we want to specify the Content-Type ourselves.
+        val contentType = savedFile.mimeType?.let { ContentType.parse(it) }
+        val lfc = if (contentType == null) LocalFileContent(savedFile.file) else LocalFileContent(
+            savedFile.file,
+            contentType = contentType
+        )
+        call.respond(lfc)
     }
 }
 
