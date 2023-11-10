@@ -7,6 +7,7 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.net.URLConnection
+import java.nio.file.Files
 import java.util.*
 
 data class SavedFile(
@@ -18,11 +19,13 @@ data class SavedFile(
     // don't want to just check the extension
     val mimeType: String? = run {
         val inputStream = BufferedInputStream(FileInputStream(file))
-        URLConnection.guessContentTypeFromStream(inputStream)
+        val streamType = URLConnection.guessContentTypeFromStream(inputStream)
+        streamType ?: Files.probeContentType(file.toPath())
     }
 
     //val mimeType: String? = Files.probeContentType(file.toPath())
     val mediaType = run {
+        println(mimeType)
         mimeType?.let { ModelMapper.MEDIA_TYPE.apply(it) } ?: MediaType.UNKNOWN
     }
 }
