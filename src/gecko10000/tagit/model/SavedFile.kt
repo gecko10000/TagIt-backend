@@ -25,7 +25,6 @@ data class SavedFile(
 
     //val mimeType: String? = Files.probeContentType(file.toPath())
     val mediaType = run {
-        println(mimeType)
         mimeType?.let { ModelMapper.MEDIA_TYPE.apply(it) } ?: MediaType.UNKNOWN
     }
 }
