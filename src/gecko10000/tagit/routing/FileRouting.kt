@@ -24,6 +24,14 @@ import java.io.IOException
 
 private val log: Logger = LoggerFactory.getLogger("FileRouting")
 
+private suspend fun validateToken(call: ApplicationCall): String? {
+    val token = call.request.queryParameters["token"]
+    val user = token?.let { db.userFromToken(token) }
+    user?.let { return token }
+    call.respond(HttpStatusCode.Unauthorized)
+    return null
+}
+
 private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
     val uuid = uuidFromStringSafe(call.parameters["uuid"])
     uuid ?: run {
@@ -39,8 +47,7 @@ private suspend fun ensureFileExists(call: ApplicationCall): SavedFile? {
 // therefore, the token is provided as a query parameter.
 private fun Route.getFileRoute() {
     get("{uuid}") {
-        val token = call.request.queryParameters["token"]
-        token?.let { db.userFromToken(token) } ?: return@get call.respond(HttpStatusCode.Unauthorized)
+        validateToken(call) ?: return@get
         val savedFile = ensureFileExists(call) ?: return@get
         call.response.header(
             HttpHeaders.ContentDisposition,
@@ -68,6 +75,7 @@ private fun Route.getFileInfoRoute() {
 
 private fun Route.getFileThumbnailRoute() {
     get("{uuid}/thumb") {
+        validateToken(call) ?: return@get
         val savedFile = ensureFileExists(call) ?: return@get
         thumbnailController.getThumbnail(savedFile)?.let { call.respondFile(it) }
             ?: call.respond(HttpStatusCode.NotFound)
@@ -177,7 +185,6 @@ fun Route.fileRouting() {
     route("/file") {
         authenticate("auth-bearer") {
             getFileInfoRoute()
-            getFileThumbnailRoute()
             uploadFileRoute()
             renameFileRoute()
             addTagRoute()
@@ -186,5 +193,6 @@ fun Route.fileRouting() {
             checkFileExists()
         }
         getFileRoute()
+        getFileThumbnailRoute()
     }
 }
