@@ -81,6 +81,7 @@ class TagController(
         }
         // kys
         tags.remove(tag.uuid)
+        dataDirectory.getTagDirectory(tag).delete()
     }
 
     private fun loadFileTag(file: File, tag: Tag) {
