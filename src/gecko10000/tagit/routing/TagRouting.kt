@@ -92,8 +92,15 @@ private fun Route.renameTagRoute() {
             }
             if (!tagController.renameTag(tag, newName))
                 return@patch call.respond(HttpStatusCode.InternalServerError, "Could not rename tag.")
+            val newTag = tagController.readOnlyTagMap().values.firstOrNull { it.fullName() == newName }
+            newTag ?: return@patch call.respond(HttpStatusCode.InternalServerError, "Tag renamed but not found.")
+            val headers = call.request.headers
+            val tagOrder = TagOrder.get(headers)
+            val tagsReversed = headers.tagsReversed()
+            val fileOrder = FileOrder.get(headers)
+            val filesReversed = headers.filesReversed()
+            call.respondJson(JsonMapper.TAG(newTag, tagOrder, tagsReversed, fileOrder, filesReversed))
         }
-        call.respond(HttpStatusCode.OK)
     }
 }
 
