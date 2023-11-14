@@ -1,6 +1,7 @@
 package gecko10000.tagit.controller
 
 import gecko10000.tagit.dataDirectory
+import gecko10000.tagit.fileController
 import gecko10000.tagit.model.SavedFile
 import gecko10000.tagit.model.Tag
 import gecko10000.tagit.mutex
@@ -86,8 +87,7 @@ class FileController(
     fun deleteFile(savedFile: SavedFile) {
         log.info("Deleting file {}.", savedFile.file.name)
         for (tagId in savedFile.tags) {
-            val tag = tagController[tagId] ?: continue
-            removeTag(savedFile, tag)
+            removeTag(savedFile.uuid, tagId)
         }
         savedFile.file.delete()
         files.remove(savedFile.uuid)
@@ -102,7 +102,9 @@ class FileController(
         tags[tagId] = tag.copy(files = tag.files.plus(fileId))
     }
 
-    fun addTag(savedFile: SavedFile, tag: Tag) {
+    fun addTag(fileId: UUID, tagId: UUID) {
+        val savedFile = fileController[fileId] ?: return
+        val tag = tagController[tagId] ?: return
         log.info("Adding tag {} to {}.", tag.fullName(), savedFile.file.name)
         addTagInternal(savedFile, tag)
         val tagDir = dataDirectory.getTagDirectory(tag)
@@ -117,9 +119,9 @@ class FileController(
         }
     }
 
-    fun removeTag(savedFile: SavedFile, tag: Tag) {
-        val fileId = savedFile.uuid
-        val tagId = tag.uuid
+    fun removeTag(fileId: UUID, tagId: UUID) {
+        val savedFile = fileController[fileId] ?: return
+        val tag = tagController[tagId] ?: return
         val fileName = savedFile.file.name
         log.info("Removing tag {} from {}.", tag.fullName(), fileName)
         files[fileId] = savedFile.copy(tags = savedFile.tags.minus(tagId))

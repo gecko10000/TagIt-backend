@@ -146,7 +146,7 @@ private fun Route.addTagRoute() {
         mutex.withLock {
             val existing = ensureFileExists(call) ?: return@patch
             val tag = getTagFromParams(call) ?: return@patch
-            fileController.addTag(existing, tag)
+            fileController.addTag(existing.uuid, tag.uuid)
         }
         call.respond(HttpStatusCode.OK)
     }
@@ -157,7 +157,7 @@ private fun Route.removeTagRoute() {
         mutex.withLock {
             val existing = ensureFileExists(call) ?: return@patch
             val tag = getTagFromParams(call) ?: return@patch
-            fileController.removeTag(existing, tag)
+            fileController.removeTag(existing.uuid, tag.uuid)
         }
         call.respond(HttpStatusCode.OK)
     }

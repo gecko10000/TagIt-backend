@@ -37,13 +37,17 @@ class TagController(
     }
 
     fun renameTag(tag: Tag, newName: String): Boolean {
-        log.info("Renaming tag {} tag {}.", tag.fullName(), newName)
+        log.info("Renaming tag {} to {}.", tag.fullName(), newName)
         // TODO: make this use the same directory to maintain UUID.
         val newTag = createTag(newName)
-        for (fileName in tag.files) {
-            val file = files[fileName] ?: continue
-            fileController.removeTag(file, tag)
-            fileController.addTag(file, newTag)
+        for (fileId in tag.files) {
+            val file = files[fileId]
+            if (file == null) {
+                println("File with ID $fileId not found.")
+                continue
+            }
+            fileController.removeTag(fileId, tag.uuid)
+            fileController.addTag(fileId, newTag.uuid)
         }
         val success = tag.children.fold(true) { acc, uuid ->
             val child = tags[uuid] ?: return@fold false
@@ -71,8 +75,7 @@ class TagController(
         }
         // remove tag from files
         for (fileId in tag.files) {
-            val file = files[fileId] ?: continue
-            fileController.removeTag(file, tag)
+            fileController.removeTag(fileId, tag.uuid)
         }
         // remove self from parent tag
         val parent = tag.parent?.let { tags[it] }
