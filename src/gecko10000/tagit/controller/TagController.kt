@@ -45,9 +45,9 @@ class TagController(
             fileController.removeTag(file, tag)
             fileController.addTag(file, newTag)
         }
-        val success = tag.children.fold(true) { acc, childName ->
-            val child = tags[childName] ?: return@fold false
-            return acc and renameTag(child, "$newName/${childName}")
+        val success = tag.children.fold(true) { acc, uuid ->
+            val child = tags[uuid] ?: return@fold false
+            return@fold acc and renameTag(child, "$newName/${child.name}")
         }
         deleteTag(tag)
         return success
