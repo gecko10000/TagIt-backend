@@ -23,12 +23,14 @@ enum class TagOrder(val comparator: Comparator<Tag>) {
     }
 }
 
+private val modificationDateComparator = compareBy<SavedFile> { it.file.lastModified() }
+
 enum class FileOrder(val comparator: Comparator<SavedFile>) {
     FILE_NAME(compareBy { it.file.name }),
-    MODIFICATION_DATE(compareBy { it.file.lastModified() }),
-    FILE_SIZE(compareBy { it.file.length() }),
-    NUM_TAGS(compareBy { it.tags.size }),
-    FILE_TYPE(compareBy { it.file.extension }),
+    MODIFICATION_DATE(modificationDateComparator),
+    FILE_SIZE(compareBy<SavedFile> { it.file.length() }.thenComparing(modificationDateComparator)),
+    NUM_TAGS(compareBy<SavedFile> { it.tags.size }.thenComparing(modificationDateComparator)),
+    FILE_TYPE(compareBy<SavedFile> { it.file.extension }.thenComparing(modificationDateComparator)),
     ;
 
     companion object {
