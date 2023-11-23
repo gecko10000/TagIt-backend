@@ -43,7 +43,7 @@ val parser = Parser.create(
     },
     ParserComponent.mapChildren("file") { s ->
         // we get file:[ ]*<filename> so we have to remove the leading text
-        val sub = (s[0] as String).substringAfter(':').trimStart()
+        val sub = (s[0] as String).substringAfter(':')
         Predicate<SavedFile> { it.file.name.contains(sub) }
     },
     ParserComponent.mapChildren("tag") { s ->
