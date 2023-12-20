@@ -19,7 +19,10 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.set
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class FileController(
     private val files: ConcurrentHashMap<UUID, SavedFile>,
@@ -129,13 +132,26 @@ class FileController(
         dataDirectory.getTagDirectory(tag).resolve(fileName).delete()
     }
 
+    private fun loadFile(file: File) {
+        val savedFile = SavedFile(file = file)
+        files[savedFile.uuid] = savedFile
+    }
+
+    @OptIn(ExperimentalTime::class)
     private fun loadFiles() {
         val fileList = dataDirectory.file.listFiles()!!
-        for (file in fileList) {
-            val savedFile = SavedFile(file = file)
-            files[savedFile.uuid] = savedFile
+        val size = fileList.size
+        var progress = AtomicInteger()
+        val time = measureTime {
+            fileList.map { file ->
+                loadFile(file)
+                val currProgress = progress.incrementAndGet()
+                if (currProgress % 100 == 0) {
+                    log.info("Loaded {} of {} files.", currProgress, size)
+                }
+            }
         }
-        log.info("Loaded {} files.", fileList.size)
+        log.info("Loaded {} files in {}.", fileList.size, time.toString())
     }
 
     init {
