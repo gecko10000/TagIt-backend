@@ -36,7 +36,7 @@ class TagController(
         return tag
     }
 
-    fun renameTag(tag: Tag, newName: String): Boolean {
+    private fun noDeleteRenameTag(tag: Tag, newName: String): Boolean {
         log.info("Renaming tag {} to {}.", tag.fullName(), newName)
         // TODO: make this use the same directory to maintain UUID.
         val newTag = createTag(newName)
@@ -51,8 +51,13 @@ class TagController(
         }
         val success = tag.children.fold(true) { acc, uuid ->
             val child = tags[uuid] ?: return@fold false
-            return@fold acc and renameTag(child, "$newName/${child.name}")
+            return@fold acc and noDeleteRenameTag(child, "$newName/${child.name}")
         }
+        return success
+    }
+
+    fun renameTag(tag: Tag, newName: String): Boolean {
+        val success = noDeleteRenameTag(tag, newName)
         deleteTag(tag)
         return success
     }
